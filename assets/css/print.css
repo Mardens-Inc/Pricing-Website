@@ -1,0 +1,20 @@
+.title, .price, .year {
+    margin: 0;
+    width: 100px;
+    text-align: start;
+}
+.year{
+    text-align: end;
+}
+.price {
+    font-weight: 800;
+    font-size: 3em;
+}
+.content{
+    width: fit-content;
+    width: -webkit-fit-content;
+    width: -moz-fit-content;
+}
+.content > *{
+    width: 100%;
+}

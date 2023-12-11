@@ -1,0 +1,2 @@
+var rows = [];
+var loadedJson = {};

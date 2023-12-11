@@ -1,0 +1,7 @@
+{
+    "require": {
+        "phpoffice/phpspreadsheet": "^1.28",
+        "hashids/hashids": "^5.0",
+        "halaxa/json-machine": "^1.1"
+    }
+}
