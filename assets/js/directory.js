@@ -24,9 +24,12 @@ $(database).on("loaded", async (_, data) => {
             database.search("");
         });
 
+        // Set the page header to "Pricing Database Directory".
+        $("#page-header").html("Pricing Database Directory");
+
         // Create a new Pagination object and replace the existing pagination with it.
-        let pagination = new Pagination(database);
-        $(".pagination").replaceWith(pagination.getPaginationHTML());
+        let pag = new Pagination(database);
+        $(".pagination").replaceWith(pag.getPaginationHTML());
     }
     // If the data type is a location...
     else if (data.type == listTypes.location) {
@@ -61,7 +64,11 @@ $(database).on("loaded", async (_, data) => {
             });
         }
 
+        // Checks if the webkitSpeechRecognition API is available.
         if (!("webkitSpeechRecognition" in window)) console.error("Voice search is not supported in this browser.");
+
+        // Set the page header to the location name.
+        $("#page-header").html(`${database.listData.name}#${database.listData.po}`);
     }
 
     // Add the "search-table" class to the table.
