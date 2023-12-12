@@ -32,7 +32,7 @@
 
     <!-- Setup JS Classes -->
     <script src="/assets/js/database.js"></script>
-    <script src="/assets/js/authentication.min.js"></script>
+    <script src="/assets/js/authentication.js"></script>
     <script src="/assets/js/parsing.js"></script>
 
 </head>
@@ -293,10 +293,10 @@
 
 
 
-    <script src="/assets/js/authorization.min.js"></script>
-    <script src="/assets/js/directory.min.js"></script>
-    <script src="/assets/js/inputs.min.js"></script>
-    <script src="/assets/js/voice-search.min.js"></script>
+    <script src="/assets/js/authorization.js"></script>
+    <script src="/assets/js/directory.js"></script>
+    <script src="/assets/js/inputs.js"></script>
+    <script src="/assets/js/voice-search.js"></script>
     <?php
     echo "<script>
     database.keyword = \"" . (isset($_GET['q']) ? $_GET["q"] : "") . "\";
