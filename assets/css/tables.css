@@ -55,10 +55,13 @@ table tbody tr {
     font-size: 1rem;
 }
 
-table tbody tr:hover {
+table tbody tr:hover, table tbody tr.selected {
     cursor: pointer;
     background: var(--primary);
     color: white;
+}
+table tbody tr.selected{
+    filter: brightness(1.2) contrast(1.2);
 }
 
 table tbody tr td {
