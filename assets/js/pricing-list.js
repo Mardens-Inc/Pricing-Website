@@ -1,4 +1,5 @@
-var selectedElement = undefined;
+var printElement = undefined;
+var selectedElements = [];
 
 /**
  * Handle event listeners
@@ -208,19 +209,67 @@ function editPricingListOptions() {
     database.editList(name, location, po, image, options);
 }
 function openListItemOptions(element) {
-    selectedElement = element;
+    printElement = element;
     database.options = JSON.parse(database.listData.options);
     closePopup();
+    $("#list-item-options-popup .title").html(selectedElements.length > 1 ? "Multiple Items Selected" : "Selected Item");
     openPopup("list-item-options-popup");
+    $("#edit-list-item-popup").attr("selectedId", $(element).attr("id"));
+    $("#delete-entry-button").attr("onclick", `database.deleteItem("${$(element).attr("id")}")`);
+    $("#select-entry-button").attr("onclick", `selectElement("${$(element).attr("id")}")`);
     $("#list-item-options-popup.popup #print-button").css("display", database.options.print ? "" : "none");
 }
 
+function selectElement(id) {
+    $(`#${id}`).addClass("selected");
+    selectedElements.push(id);
+    console.log(selectedElements);
+    closePopup();
+}
+
+
 function print() {
-    if (selectedElement == undefined) return;
-    let price = $(selectedElement).find(`.location-${database.options["print-price-column"]}`).text().replace("$", "");
+    if (printElement == undefined) return;
+    let price = $(printElement).find(`.location-${database.options["print-price-column"]}`).text().replace("$", "");
     let pw = window.open(`/print.php?title=${database.options["print-label"]}&year=${database.options["print-year"]}&price=${price}`, "Print Window", "width=800,height=600");
     pw.addEventListener("load", () => pw.print()); // Print the window when it loads
     pw.addEventListener("blur", () => pw.close()); // Close the window when it loses focus
     closePopup();
-    selectedElement == undefined;
+    printElement == undefined;
+}
+
+function openEditListItem() {
+    closePopup();
+    id = $("#edit-list-item-popup").attr("selectedId");
+    let form = $("#edit-list-item-popup .form-input");
+    form.html("");
+    for (let i = 0; i < database.columns.length; i++) {
+        let column = database.columns[i];
+        if (column == "id" || column == "date") continue;
+        let row = $($(`#${id} .location-${column}`)[0]);
+        if (row.length == 0) continue;
+        let value = row.text();
+        let label = $(`<label for="${column}">${column.replace(/_/g, " ").toUpperCase()}</label>`);
+        let input = $(`<input type="text" name="${column}" value="${value}">`);
+
+        form.append(label);
+        form.append(input);
+    }
+
+    let button = $(`<button>Save</button>`);
+    $(button).on("click", async () => {
+        let json = { id: id };
+        $(`#edit-list-item-popup .form-input input`).each((_, element) => {
+            let column = $(element).attr("name");
+            let value = $(element).val();
+            json[column] = value;
+        });
+        json = JSON.stringify(json);
+        await database.editListItem(json);
+        await database.loadList(database.list);
+        closePopup();
+    });
+    form.append(button);
+
+    openPopup("edit-list-item-popup");
 }
