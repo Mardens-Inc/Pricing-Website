@@ -15,6 +15,8 @@ class DB_Connect
 
         // Connecting to mysql database
         try{
+            $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASSWORD);
+            $conn->query("CREATE DATABASE IF NOT EXISTS `$DB_NAME`");
             $conn = new mysqli($DB_HOST, $DB_USER, $DB_PASSWORD, $DB_NAME);
         }catch(mysqli_sql_exception $e){
             header("Content-Type: application/json");
