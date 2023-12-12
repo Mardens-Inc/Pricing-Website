@@ -20,6 +20,18 @@ class Authentication
         // Create a Hashids object to encode and decode IDs
         $this->hashids = new Hashids($_ENV["HASH_SALT"], 24);
 
+        
+        // Create the users table if it doesn't exist
+        $sql = "CREATE TABLE IF NOT EXISTS `users` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `username` varchar(255) NOT NULL,
+            `password` varchar(255) NOT NULL,
+            `permissions` varchar(255) NOT NULL,
+            PRIMARY KEY (`id`)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        $this->connection->query($sql);
+        
+        // Create the admin account if it doesn't exist
         $this->createAdminAccount();
     }
 
