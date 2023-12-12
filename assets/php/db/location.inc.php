@@ -84,7 +84,36 @@ class Location
     }
 
 
+    /**
+     * Edit a location in the database
+     * @param string $id The ID of the location to edit the pricing of
+     * @param array $json The JSON data to edit in the database
+     * @return array An array containing the ID of the newly inserted location and whether the operation was successful
+     */
+    public function edit(string $id, array $json): array
+    {
+        // $id = $this->hashids->decode($id)[0];
+        $itemId = $json["id"];
+        $itemId = $this->hashids->decode($itemId)[0];
+        unset($json["id"]);
+        $sql = "UPDATE `$id` SET ";
 
+        $keys = array_keys($json);
+        for ($i = 0; $i < count($keys); $i++) {
+            $key = $keys[$i];
+            $value = $json[$key];
+            $value = trim($value);
+            $value = mysqli_real_escape_string($this->connection, $value);
+            $sql .= "`$key` = '$value', ";
+        }
+
+        $sql = rtrim($sql, ", ");
+
+        $sql .= " WHERE id = $itemId LIMIT 1";
+
+        return ["success" => $this->connection->query($sql), "id" => $itemId];
+
+    }
 
 
 
@@ -227,6 +256,7 @@ class Location
      */
     public function delete(string $id, string $item): array
     {
+        $item = $this->hashids->decode($item)[0];
         $sql = "DELETE FROM `$id` WHERE id = $item LIMIT 1";
         $result = $this->connection->query($sql);
         if (!$result) {
