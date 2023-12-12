@@ -26,7 +26,8 @@ class Locations
             `location` varchar(255) NOT NULL,
             `po` varchar(255) NOT NULL,
             `image` varchar(255) NOT NULL,
-            `options` varchar(255) NOT NULL,
+            `options` varchar(255) NOT NULL DEFAULT '{}',
+            `post_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
         $this->connection->query($sql);
