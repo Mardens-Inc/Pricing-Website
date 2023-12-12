@@ -214,7 +214,7 @@
                     </div>
                 </div>
                 <toggle name="voice-search" value="false">Enable voice searching?</toggle>
-                
+
                 <div class="voice-form fill" style="display:none;margin-bottom: 1rem;">
                     <div class="col fill" style="margin-right: 5px">
                         <label for="voice-description-column">Title/Description Column</label>
@@ -252,16 +252,36 @@
                         <td>Print Entry</td>
                         <td><button>Action</button></td>
                     </tr>
-                    <tr>
+                    <tr id="select-entry-button">
+                        <td>Select Entry</td>
+                        <td><button>Action</button></td>
+                    </tr>
+                    <tr id="edit-entry-button" onclick="openEditListItem();">
                         <td>Edit Entry</td>
                         <td><button>Action</button></td>
                     </tr>
-                    <tr>
+                    <tr id="delete-entry-button">
                         <td>Delete Entry</td>
                         <td><button>Action</button></td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+
+    <div class="popup" id="edit-list-item-popup">
+        <div class="popup-content center vertical col">
+            <div class="popup-header row center vertical">
+                <div class="title fill">Edit Item</div>
+                <button class="close">x</button>
+            </div>
+
+            <div class="form-input">
+                <label for="">UPC</label>
+                <input type="text" name="upc" id="upc" placeholder="UPC" autocomplete="off">
+            </div>
+
         </div>
     </div>
 
