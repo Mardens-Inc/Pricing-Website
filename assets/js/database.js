@@ -91,7 +91,11 @@ class Database {
 
         if (this.list != "") {
             this.listData = await this.loadListData();
-            this.options = JSON.parse(this.listData.options);
+            try {
+                this.options = JSON.parse(this.listData.options);
+            } catch {
+                this.options = {};
+            }
         } else {
             this.options = {};
         }
@@ -203,7 +207,7 @@ class Database {
      */
     updateURLParameters() {
         // Define the base URL.
-        let url = '/?';
+        let url = "/?";
 
         // Add the limit parameter.
         url += `limit=${this.limit}`;
@@ -216,21 +220,21 @@ class Database {
 
         // Add the ascending parameter if it's true.
         if (this.ascending) {
-            url += '&asc';
+            url += "&asc";
         }
 
         // Add the list parameter if it's not empty.
-        if (this.list !== '') {
+        if (this.list !== "") {
             url += `&list=${this.list}`;
         }
 
         // Add the keyword parameter if it's not empty.
-        if (this.keyword !== '') {
+        if (this.keyword !== "") {
             url += `&q=${this.keyword}`;
         }
 
         // Update the browser's history state.
-        window.history.pushState('', '', url);
+        window.history.pushState("", "", url);
     }
 
     /**
@@ -267,8 +271,6 @@ class Database {
         let displayNames = [];
         // Convert the columns to an array and iterate over each column.
         Array.from(columns).forEach((column) => {
-            // If the column name is "options" or "image", skip this iteration.
-            if (column == "options" || column == "image") return;
             // Replace underscores in the column name with spaces and add it to the displayNames array.
             displayNames.push(column.replace("_", " "));
         });
@@ -301,12 +303,12 @@ class Database {
         // Append a new row to the thead.
         items.find("thead").append(`<tr></tr>`);
         // For each display name...
-        for (let i = 0; i < displayNames.length; i++) {
+        for (let i = 0; i < columns.length; i++) {
             // Get the display name and corresponding column name.
             let displayName = displayNames[i];
             let column = columns[i];
             // If the column name is "options" or "image", return.
-            if (column == "options" || column == "image") return;
+            if (column == "options" || column == "image") continue;
             // If the column name is "id", set the display name to an empty string.
             if (column == "id") displayName = "";
             // Create a new th element with the class "location-{column}" and the sort attribute set to the column name.
@@ -338,7 +340,7 @@ class Database {
                     <td class="location-name">${item.name}</td>
                     <td class="location-address">${item.location}</td>
                     <td class="location-po">${item.po}</td>
-                    <td class="location-date">${date.toLocaleDateString("en-us", { weekday: "long", year: "numeric", month: "short", day: "numeric" })}</td>
+                    <td class="location-date">${date.toLocaleDateString("en-us", { hour: "2-digit", minute: "2-digit" , weekday: "long", year: "numeric", month: "short", day: "numeric" })}</td>
                 </tr>
                 `);
                 // Add a click event listener to the row that loads the item details.
@@ -367,6 +369,7 @@ class Database {
                 items.append(row);
             }
         });
+
         // Return the table.
         return items;
     }
