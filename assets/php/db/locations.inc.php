@@ -18,6 +18,18 @@ class Locations
             die($this->connection->error);
         }
         $this->hashids = new Hashids($_ENV["HASH_SALT"], 10);
+
+        // Create the locations table if it doesn't exist
+        $sql = "CREATE TABLE IF NOT EXISTS `locations` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `name` varchar(255) NOT NULL,
+            `location` varchar(255) NOT NULL,
+            `po` varchar(255) NOT NULL,
+            `image` varchar(255) NOT NULL,
+            `options` varchar(255) NOT NULL,
+            PRIMARY KEY (`id`)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+        $this->connection->query($sql);
     }
 
     /**
