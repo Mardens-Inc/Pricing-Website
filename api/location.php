@@ -58,6 +58,17 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         http_response_code(400);
         die(json_encode(["success" => false, "error" => "Invalid JSON"]));
     }
+
+    if(isset($_GET["action"]))
+    {
+        switch($_GET["action"])
+        {
+            case "edit":
+                http_response_code(200);
+                die(json_encode($loc->edit($id, $json)));
+        }
+    }
+
     die(json_encode($loc->add($id, $json)));
 } else if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
     http_response_code(200);
