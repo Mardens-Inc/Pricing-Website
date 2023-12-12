@@ -335,12 +335,12 @@ class Database {
             if (this.list == "") {
                 // Create a new row with the item data.
                 let row = $(`
-                <tr>
+                <tr id="${item.id}">
                     <td class="location-icon">${image}</td>
                     <td class="location-name">${item.name}</td>
                     <td class="location-address">${item.location}</td>
                     <td class="location-po">${item.po}</td>
-                    <td class="location-date">${date.toLocaleDateString("en-us", { hour: "2-digit", minute: "2-digit" , weekday: "long", year: "numeric", month: "short", day: "numeric" })}</td>
+                    <td class="location-date">${date.toLocaleDateString("en-us", { hour: "2-digit", minute: "2-digit", weekday: "long", year: "numeric", month: "short", day: "numeric" })}</td>
                 </tr>
                 `);
                 // Add a click event listener to the row that loads the item details.
@@ -362,9 +362,19 @@ class Database {
                     row += `<td class="location-${column}">${value}</td>`;
                 }
                 // Convert the row string to a jQuery object.
-                row = $(`<tr>${row}</tr>`);
+                row = $(`<tr id="${item.id}">${row}</tr>`);
                 // Add a click event listener to the row that opens the list item options.
-                row.on("click", () => openListItemOptions(row));
+                row.on("click", () => {
+                    if (selectedElements.length == 0) {
+                        openListItemOptions(row);
+                    } else {
+                        selectElement(item.id);
+                    }
+                });
+                row.on("contextmenu", (e) => {
+                    e.preventDefault();
+                    openListItemOptions(row);
+                });
                 // Append the row to the table.
                 items.append(row);
             }
@@ -426,6 +436,66 @@ class Database {
 
         // Make the AJAX request
         $.ajax(url, ajaxSettings);
+    }
+
+    async editListItem(json) {
+        const url = `/api/location.php?id=${this.list}&action=edit`;
+
+        const ajaxSettings = {
+            method: "POST",
+            data: json,
+            success: handleSuccess,
+            error: handleError,
+        };
+
+        function handleSuccess(data) {
+            if (data.error) {
+                console.error(`Error editing pricing list: ${data.error}`);
+                alert(`Error editing pricing list: ${data.error}`);
+                closePopup();
+                return;
+            }
+            database.loadList(database.list);
+            closePopup();
+        }
+
+        function handleError(xhr, status, error) {
+            console.error(`Error editing pricing list: ${error}`);
+            alert(`Error editing pricing list: ${error}`);
+            closePopup();
+        }
+
+        await $.ajax(url, ajaxSettings);
+    }
+
+    async deleteItem(id) {
+        const url = `/api/location.php?id=${this.list}&item=${id}`;
+        console.log(url);
+
+        const ajaxSettings = {
+            method: "DELETE",
+            success: handleSuccess,
+            error: handleError,
+        };
+
+        function handleSuccess(data) {
+            if (data.error) {
+                console.error(`Error deleting pricing list: ${data.error}`);
+                alert(`Error deleting pricing list: ${data.error}`);
+                closePopup();
+                return;
+            }
+            database.loadList(database.list);
+            closePopup();
+        }
+
+        function handleError(xhr, status, error) {
+            console.error(`Error deleting pricing list: ${error}`);
+            alert(`Error deleting pricing list: ${error}`);
+            closePopup();
+        }
+
+        await $.ajax(url, ajaxSettings);
     }
 
     /**
