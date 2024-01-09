@@ -84,7 +84,8 @@ class Database {
         this.limit = limit;
 
         // Assign the 'keyword' parameter to the 'this.keyword' property of the current object and replace leading zeros.
-        this.keyword = keyword.replace(/^0+/, "").trim();
+        this.keyword = keyword;
+        keyword = keyword.replace(/^0+/, "").trim();
 
         // Call the 'updateURLParameters' method of the current object.
         this.updateURLParameters();
