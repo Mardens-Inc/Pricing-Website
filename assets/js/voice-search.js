@@ -26,7 +26,7 @@ class Voice {
     constructor(replaceText = "") {
         // Checks if the browser supports voice recognition
         // Only works in Chrome and Safari
-        if (!("webkitSpeechRecognition" in window)) {
+        if (!(window.SpeechRecognition || window.webkitSpeechRecognition)) {
             this.unsupported = true;
             alert("Your browser does not support voice recognition");
             return;
