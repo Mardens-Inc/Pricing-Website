@@ -64,9 +64,6 @@ $(database).on("loaded", async (_, data) => {
             });
         }
 
-        // Checks if the webkitSpeechRecognition API is available.
-        if (!("webkitSpeechRecognition" in window)) console.error("Voice search is not supported in this browser.");
-
         // Set the page header to the location name.
         $("#page-header").html(`${database.listData.name}#${database.listData.po}`);
     }
