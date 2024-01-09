@@ -102,12 +102,21 @@ class Database {
         }
 
         // Construct the URL for the AJAX request. The URL is constructed based on the parameters passed.
-        let url = `/api/location${list == "" ? "s" : ""}.php?limit=${limit}&page=${page}&sort=${sort}${ascending ? "&asc" : ""}${keyword == "" ? "" : "&query=" + keyword}${list == "" ? "" : "&id=" + list}`;
+        let urls = `/api/location${list == "" ? "s" : ""}.php?limit=${limit}&page=${page}&sort=${sort}${ascending ? "&asc" : ""}${keyword == "" ? "" : "&query=" + keyword}${list == "" ? "" : "&id=" + list}`;
+        const url = new URL("/api/locations.php");
+        url.searchParams.set("limit", limit);
+        url.searchParams.set("page", page);
+        url.searchParams.set("sort", sort);
+        if (ascending) url.searchParams.set("asc", "");
+        if (keyword != "") url.searchParams.set("q", keyword);
+        if (list != "") url.searchParams.set("id", list);
+        console.log(url.href)
+        console.log(urls)
 
         // Make an AJAX request to the constructed URL.
         return await $.ajax({
             // The URL to which the request is made.
-            url: url,
+            url: urls,
 
             // The HTTP method for the request.
             type: "GET",
@@ -207,35 +216,16 @@ class Database {
      * @returns {void}
      */
     updateURLParameters() {
-        // Define the base URL.
-        let url = "/?";
-
-        // Add the limit parameter.
-        url += `limit=${this.limit}`;
-
-        // Add the page parameter.
-        url += `&page=${this.page}`;
-
-        // Add the sort parameter.
-        url += `&sort=${this.sort}`;
-
-        // Add the ascending parameter if it's true.
-        if (this.ascending) {
-            url += "&asc";
-        }
-
-        // Add the list parameter if it's not empty.
-        if (this.list !== "") {
-            url += `&list=${this.list}`;
-        }
-
-        // Add the keyword parameter if it's not empty.
-        if (this.keyword !== "") {
-            url += `&q=${this.keyword}`;
-        }
+        const url = new URL("/", window.location.origin);
+        url.searchParams.set("limit", this.limit);
+        url.searchParams.set("page", this.page);
+        url.searchParams.set("sort", this.sort);
+        if (this.ascending) url.searchParams.set("asc", "");
+        if (this.keyword != "") url.searchParams.set("q", this.keyword);
+        if (this.list != "") url.searchParams.set("id",this.list);
 
         // Update the browser's history state.
-        window.history.pushState("", "", url);
+        window.history.pushState("", "", url.href);
     }
 
     /**
