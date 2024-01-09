@@ -46,7 +46,7 @@ input.error {
 }
 
 
-select{
+select {
     background-color: hsla(0, 0%, 0%, 0.15);
     color: black;
     padding: 1rem;
@@ -54,7 +54,8 @@ select{
     border: none;
     cursor: pointer;
 }
-option{
+
+option {
     background-color: white;
     color: black;
     padding: 1rem;
@@ -62,7 +63,8 @@ option{
     outline: none;
     border: none;
 }
-toggle{
+
+toggle {
     position: relative;
     display: flex;
     justify-content: start;
@@ -75,8 +77,10 @@ toggle{
     -moz-user-select: none;
     -webkit-user-select: none;
     -ms-user-select: none;
+    min-width: calc(5rem + 70px);
 }
-toggle::before{
+
+toggle::before {
     content: '';
     position: absolute;
     right: 0;
@@ -89,7 +93,8 @@ toggle::before{
     border-radius: 100px;
     background-color: hsla(0, 0%, 0%, 0.15);
 }
-toggle::after{
+
+toggle::after {
     content: '';
     position: absolute;
     right: 3px;
@@ -106,6 +111,6 @@ toggle::after{
     transition-duration: 200ms;
 }
 
-toggle[value=true]::after{
+toggle[value=true]::after {
     transform: translateX(0);
 }
