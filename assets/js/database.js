@@ -103,7 +103,7 @@ class Database {
 
         // Construct the URL for the AJAX request. The URL is constructed based on the parameters passed.
         let urls = `/api/location${list == "" ? "s" : ""}.php?limit=${limit}&page=${page}&sort=${sort}${ascending ? "&asc" : ""}${keyword == "" ? "" : "&query=" + keyword}${list == "" ? "" : "&id=" + list}`;
-        const url = new URL("/api/locations.php");
+        const url = new URL(`/api/location${list == "" ? "s" : ""}`, window.location.origin);
         url.searchParams.set("limit", limit);
         url.searchParams.set("page", page);
         url.searchParams.set("sort", sort);
@@ -116,7 +116,7 @@ class Database {
         // Make an AJAX request to the constructed URL.
         return await $.ajax({
             // The URL to which the request is made.
-            url: urls,
+            url: url.href,
 
             // The HTTP method for the request.
             type: "GET",
