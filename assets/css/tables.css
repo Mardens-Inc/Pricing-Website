@@ -102,3 +102,7 @@ table.list-view td, table.list-view th {
 table#admin-action td:nth-child(2) {
     text-align: end;
 }
+
+table .show-options {
+    text-align: end;
+  }
