@@ -4,12 +4,14 @@
             <div class="title fill">Add Price(s)</div>
             <button class="close">x</button>
         </div>
-        <form class="form-input">
-            <div class="drag-drop-area" id="upload-pricing-data" accept="*.xlsx, *.csv"> </div>
-            <div id="comparison-form" class="col fill">
-            </div>
+        <div class="popup-body">
+            <form class="form-input">
+                <div class="drag-drop-area" id="upload-pricing-data" accept="*.xlsx, *.csv"> </div>
+                <div id="comparison-form" class="col fill">
+                </div>
 
-            <button id="upload-pricing-data-button">Upload</button>
-        </form>
+                <button id="upload-pricing-data-button">Upload</button>
+            </form>
+        </div>
     </div>
 </div>
