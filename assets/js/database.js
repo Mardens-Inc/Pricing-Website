@@ -329,7 +329,7 @@ class Database {
             // Append the th element to the row in the thead.
             items.find("thead tr").append(th);
         }
-        items.find("thead tr").append($("<th></th>"));
+        if (this.list != "") items.find("thead tr").append($("<th></th>"));
 
         // Convert the items in the data object to an array and iterate over each item.
         Array.from(data.items).forEach((item) => {
