@@ -8,33 +8,33 @@
             <thead>
                 <tr>
                     <th>Description</th>
-                    <th>Actions</th>
+                    <!-- <th>Actions</th> -->
                 </tr>
             </thead>
             <tbody>
                 <tr onclick="openCreateDatabaseEntryPopup()">
                     <td>Create a new Database Entry</td>
-                    <td><button>Action</button></td>
+                    <!-- <td><button>Action</button></td> -->
                 </tr>
                 <tr class="only-on-list-view" onclick="showAddPricingListItem()">
                     <td>Add Price(s)</td>
-                    <td><button>Action</button></td>
+                    <!-- <td><button>Action</button></td> -->
                 </tr>
                 <tr class="only-on-list-view" onclick="showEditPricingListOptions()">
                     <td>Edit Options</td>
-                    <td><button>Action</button></td>
+                    <!-- <td><button>Action</button></td> -->
                 </tr>
                 <tr class="only-on-list-view" onclick="database.deleteList()">
                     <td>Delete Pricing List</td>
-                    <td><button>Action</button></td>
+                    <!-- <td><button>Action</button></td> -->
                 </tr>
                 <tr class="only-on-list-view" onclick="database.deleteAllRows()">
                     <td>Delete All Rows</td>
-                    <td><button>Action</button></td>
+                    <!-- <td><button>Action</button></td> -->
                 </tr>
                 <tr class="logout">
                     <td>Logout</td>
-                    <td><button>Action</button></td>
+                    <!-- <td><button>Action</button></td> -->
                 </tr>
             </tbody>
         </table>
