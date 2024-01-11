@@ -33,6 +33,21 @@ class Database {
         this.listData = {};
         this.columns = [];
         this.resetURLParameters();
+
+        this.limit = localStorage.getItem("limit");
+        this.page = localStorage.getItem("page");
+        this.sort = localStorage.getItem("sort");
+        this.ascending = localStorage.getItem("asc");
+        this.keyword = localStorage.getItem("q");
+        this.list = localStorage.getItem("id");
+        if (window.location.pathname.startsWith("/list")) {
+            this.list = window.location.pathname.split("/")[2];
+            this.load(this.limit, this.page, this.sort, this.ascending, this.keyword, this.list);
+        } else {
+            this.list = "";
+            this.updateURLParameters();
+            this.loadList("");
+        }
     }
 
     /**
@@ -102,16 +117,15 @@ class Database {
         }
 
         // Construct the URL for the AJAX request. The URL is constructed based on the parameters passed.
-        let urls = `/api/location${list == "" ? "s" : ""}.php?limit=${limit}&page=${page}&sort=${sort}${ascending ? "&asc" : ""}${keyword == "" ? "" : "&query=" + keyword}${list == "" ? "" : "&id=" + list}`;
-        const url = new URL(`/api/location${list == "" ? "s" : ""}`, window.location.origin);
+        const url = new URL(`/api/location${list == "" ? "s" : ""}.php`, window.location.origin);
         url.searchParams.set("limit", limit);
         url.searchParams.set("page", page);
         url.searchParams.set("sort", sort);
         if (ascending) url.searchParams.set("asc", "");
-        if (keyword != "") url.searchParams.set("q", keyword);
+        if (keyword != "") url.searchParams.set("query", keyword);
         if (list != "") url.searchParams.set("id", list);
-        console.log(url.href)
-        console.log(urls)
+
+        console.log(url.href);
 
         // Make an AJAX request to the constructed URL.
         return await $.ajax({
@@ -216,16 +230,19 @@ class Database {
      * @returns {void}
      */
     updateURLParameters() {
-        const url = new URL("/", window.location.origin);
-        url.searchParams.set("limit", this.limit);
-        url.searchParams.set("page", this.page);
-        url.searchParams.set("sort", this.sort);
-        if (this.ascending) url.searchParams.set("asc", "");
-        if (this.keyword != "") url.searchParams.set("q", this.keyword);
-        if (this.list != "") url.searchParams.set("id",this.list);
+        localStorage.setItem("limit", this.limit);
+        localStorage.setItem("page", this.page);
+        localStorage.setItem("sort", this.sort);
+        localStorage.setItem("asc", this.ascending);
+        localStorage.setItem("q", this.keyword);
+        localStorage.setItem("id", this.list);
 
-        // Update the browser's history state.
-        window.history.pushState("", "", url.href);
+        if (this.list != "") {
+            // Update the browser's history state.
+            window.history.pushState("", "", `/list/${this.list}`);
+        } else {
+            window.history.pushState("", "", `/`);
+        }
     }
 
     /**
@@ -331,7 +348,7 @@ class Database {
                     <td class="location-name">${item.name}</td>
                     <td class="location-address">${item.location}</td>
                     <td class="location-po">${item.po}</td>
-                    <td class="location-date">${date.toLocaleDateString("en-us", { hour: "2-digit", minute: "2-digit", weekday: "long", year: "numeric", month: "short", day: "numeric" })}</td>
+                    <td class="location-date">${date.toLocaleString()}</td>
                 </tr>
                 `);
                 // Add a click event listener to the row that loads the item details.
@@ -350,6 +367,9 @@ class Database {
                     // If the value is undefined, set it to an empty string.
                     if (value == undefined) value = "";
                     // Add a new td element to the row with the class "location-{column}" and the value.
+                    if (column == "date") {
+                        value = new Date(value).toLocaleString();
+                    }
                     row += `<td class="location-${column}">${value}</td>`;
                 }
                 // Convert the row string to a jQuery object.
