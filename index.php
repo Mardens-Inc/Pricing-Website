@@ -15,6 +15,7 @@
     <link rel="stylesheet" href="/assets/css/popups.min.css">
     <link rel="stylesheet" href="/assets/css/inputs.min.css">
     <link rel="stylesheet" href="/assets/css/main.min.css">
+    <link rel="stylesheet" href="/assets/css/scrollbar.min.css">
     <link rel="stylesheet" href="/assets/fonts/fonts.min.css">
 
     <!-- jQuery -->
