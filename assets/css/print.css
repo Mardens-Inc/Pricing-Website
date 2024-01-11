@@ -1,20 +1,76 @@
-.title, .price, .year {
-    margin: 0;
-    width: 100px;
-    text-align: start;
+/* * {
+    overflow: hidden;
+} */
+
+
+#box {
+    --width: 110px;
+    --height: 78px;
+    width: var(--width);
+    max-width: var(--width);
+    min-width: var(--width);
+    height: var(--height);
+    max-height: var(--height);
+    min-height: var(--height);
+    text-align: center;
+    margin-left: 0;
+    /* margin-left: 12px; */
+    margin-top: 0;
+    padding-top: 5px;
+    /* outline: 1px solid red; */
+    font-size: 8pt;
 }
-.year{
-    text-align: end;
+
+body {
+    font-family: verdana;
+    font-size: 10pt;
+    margin: 0px;
 }
-.price {
-    font-weight: 800;
-    font-size: 3em;
-}
-.content{
-    width: fit-content;
-    width: -webkit-fit-content;
-    width: -moz-fit-content;
-}
-.content > *{
+
+.MP-title {
+    font-size: 7pt;
+    font-weight: Bold;
+    text-align: center;
     width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+
+}
+
+.MP {
+    font-size: 12pt;
+    font-weight: Bold;
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+}
+
+.RP {
+    font-size: 8pt;
+    font-weight: Bold;
+    padding: 0px;
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+}
+
+.DEPT {
+    font-size: 5pt;
+    font-weight: Bold;
+    text-align: center;
+    width: 100%;
+    width: -moz-available;
+    width: -webkit-fill-available;
+    margin: 0;
+    padding: 0;
+}
+
+
+.LotNum {
+    font-size: 8pt;
+    font-weight: Bold;
+    padding-left: 3px;
+    padding-bottom: -5px;
+    line-height: 6px;
+    text-align: right;
 }
