@@ -172,6 +172,7 @@ function showEditPricingListOptions() {
     $("#edit-pricing-options-popup input[name=po]").val(database.listData.po);
 
     $("#edit-pricing-options-popup toggle[name='print']").attr("value", database.options.print == true);
+    $("#edit-pricing-options-popup toggle[name='show-date']").attr("value", database.options["show-date"] == true);
     $("#edit-pricing-options-popup toggle[name='voice-search']").attr("value", database.options["voice-search"] == true);
     $("#edit-pricing-options-popup .print-form").css("display", database.options.print == true ? "" : "none");
     $("#edit-pricing-options-popup .voice-form").css("display", database.options["voice-search"] == true ? "" : "none");
@@ -185,6 +186,9 @@ function showEditPricingListOptions() {
 
     $("#edit-pricing-options-popup select#print-price-column").html(options);
     $("#edit-pricing-options-popup select#print-price-column").val(database.options["print-price-column"]);
+
+    $("#edit-pricing-options-popup select#print-retail-price-column").html(options);
+    $("#edit-pricing-options-popup select#print-retail-price-column").val(database.options["print-retail-price-column"]);
 
     $("#edit-pricing-options-popup select#voice-price-column").html(options);
     $("#edit-pricing-options-popup select#voice-price-column").val(database.options["voice-price-column"]);
@@ -203,8 +207,11 @@ function editPricingListOptions() {
         "print-label": $("#edit-pricing-options-popup input[name='print-label']").val(),
         "print-year": $("#edit-pricing-options-popup input[name='print-year']").val(),
         "print-price-column": $("#edit-pricing-options-popup select#print-price-column").val(),
+        "print-retail-price-column": $("#edit-pricing-options-popup select#print-retail-price-column").val(),
+        "print-show-retail": $("#edit-pricing-options-popup toggle[name='print-show-retail']").attr("value") === "true",
         "voice-price-column": $("#edit-pricing-options-popup select#voice-price-column").val(),
         "voice-description-column": $("#edit-pricing-options-popup select#voice-description-column").val(),
+        "show-date": $("#edit-pricing-options-popup toggle[name='show-date']").attr("value") === "true",
     };
     database.editList(name, location, po, image, options);
 }
@@ -227,11 +234,18 @@ function selectElement(id) {
     closePopup();
 }
 
-
 function print() {
     if (printElement == undefined) return;
-    let price = $(printElement).find(`.location-${database.options["print-price-column"]}`).text().replace("$", "");
-    let pw = window.open(`/print.php?title=${database.options["print-label"]}&year=${database.options["print-year"]}&price=${price}`, "Print Window", "width=800,height=600");
+    let price = $(printElement).find(`.location-${database.options["print-price-column"]}`).text().replace(/[^0-9.]/g, "");
+    let retail = $(printElement).find(`.location-${database.options["print-retail-price-column"]}`).text().replace(/[^0-9.]/g, "");
+
+    let url = new URL("print.php", window.location.origin);
+    url.searchParams.set("title", database.options["print-label"]);
+    url.searchParams.set("year", database.options["print-year"]);
+    url.searchParams.set("price", price);
+    if (database.options["print-show-retail"]) url.searchParams.set("retail", retail);
+
+    let pw = window.open(url.href, "Print Window", "width=800,height=600");
     pw.addEventListener("load", () => pw.print()); // Print the window when it loads
     pw.addEventListener("blur", () => pw.close()); // Close the window when it loses focus
     closePopup();
