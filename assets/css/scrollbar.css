@@ -1,0 +1,30 @@
+:root {
+    --scrollbar-width: 10px;
+    scroll-behavior: smooth;
+    scrollbar-width: var(--scrollbar-width);
+    scrollbar-color: #191919 transparent;
+}
+
+body {
+    overflow: overlay;
+}
+
+
+::-webkit-scrollbar {
+    width: var(--scrollbar-width);
+}
+
+::-webkit-scrollbar-thumb {
+    width: var(--scrollbar-width);
+    /* background: black; */
+    background: #191919;
+    border-radius: 100px;
+}
+
+::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: transparent;
+}
