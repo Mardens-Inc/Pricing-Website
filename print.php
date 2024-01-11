@@ -1,19 +1,35 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
+$name = $_GET['title'];
+$showRetail = isset($_GET['retail']);
+if ($showRetail) $price = $_GET['retail'];
+$nonTaxable = isset($_GET['nonTaxable']);
+$mardensPrice = $_GET['price'];
+?>
+<!DOCTYPE HTML>
+<html>
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print</title>
     <link rel="stylesheet" href="/assets/css/print.min.css">
-    <link rel="stylesheet" href="/assets/fonts/fonts.min.css">
 </head>
 
 <body>
-    <div class="content">
-        <p class="title"><?php echo $_GET['title']; ?></p>
-        <p class="price">$<?php echo $_GET['price']; ?></p>
-        <p class="year"><?php echo $_GET['year']; ?></p>
+    <div id="box">
+        <b style="white-space: nowrap;"><?php if ($nonTaxable) echo "<div class=\"DEPT\">Dept: 14</div>"; ?>
+            <?php echo $name; ?></br></b>
+        <?php
+        if ($showRetail) echo "<div class=\"RP\">" . number_format((float)$price, 2, '.', '') . "</div><div class=\"MP-title\">Mardens Price</div>";
+        ?>
+        <div class="MP">
+            <?php echo "$" . number_format((float)$mardensPrice, 2, '.', ''); ?>
+        </div>
     </div>
+    <script type="text/javascript">
+        window.print()
+        window.onblur = () => window.close();
+        window.onfocus = () => window.close();
+        window.onload = () => setTimeout(() => window.close(), 1000);
+    </script>
 </body>
 
 </html>
