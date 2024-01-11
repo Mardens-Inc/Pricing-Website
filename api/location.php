@@ -69,6 +69,7 @@ if ($_SERVER["REQUEST_METHOD"] == "GET") {
         }
     }
 
+    http_response_code(200);
     die(json_encode($loc->add($id, $json)));
 } else if ($_SERVER["REQUEST_METHOD"] == "DELETE") {
     http_response_code(200);
