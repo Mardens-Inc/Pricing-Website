@@ -100,7 +100,7 @@ class Database {
 
         // Assign the 'keyword' parameter to the 'this.keyword' property of the current object and replace leading zeros.
         this.keyword = keyword;
-        keyword = keyword.replace(/^0+/, "").trim();
+        if (keyword != null) keyword = keyword.replace(/^0+/, "").trim();
 
         // Call the 'updateURLParameters' method of the current object.
         this.updateURLParameters();
