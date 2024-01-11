@@ -125,8 +125,6 @@ class Database {
         if (keyword != "") url.searchParams.set("query", keyword);
         if (list != "") url.searchParams.set("id", list);
 
-        console.log(url.href);
-
         // Make an AJAX request to the constructed URL.
         return await $.ajax({
             // The URL to which the request is made.
@@ -194,7 +192,7 @@ class Database {
         }
 
         // Define the URL for the AJAX request
-        const url = `/api/locations.php?&id=${this.list}&action=single`;
+        const url = `/api/locations.php?id=${this.list}&action=single`;
 
         // Define the settings for the AJAX request
         const ajaxSettings = {
@@ -325,9 +323,13 @@ class Database {
             if (column == this.sort) {
                 th.attr("direction", this.ascending ? "asc" : "desc");
             }
+            if (column == "date" && this.options["show-date"] == false) {
+                continue;
+            }
             // Append the th element to the row in the thead.
             items.find("thead tr").append(th);
         }
+        items.find("thead tr").append($("<th></th>"));
 
         // Convert the items in the data object to an array and iterate over each item.
         Array.from(data.items).forEach((item) => {
@@ -369,18 +371,24 @@ class Database {
                     // Add a new td element to the row with the class "location-{column}" and the value.
                     if (column == "date") {
                         value = new Date(value).toLocaleString();
+                        if (value == "Invalid Date" || this.options["show-date"] == false) continue;
                     }
                     row += `<td class="location-${column}">${value}</td>`;
                 }
+                row += `
+                <td class="show-options">
+                    ${this.options.print == true ? `<button class="print"><i class="fa-solid fa-print"></i></button>` : ""}
+                    <button class="more"><i class="fa-solid fa-ellipsis-vertical"></i></button>
+                </td>`;
                 // Convert the row string to a jQuery object.
                 row = $(`<tr id="${item.id}">${row}</tr>`);
                 // Add a click event listener to the row that opens the list item options.
-                row.on("click", () => {
-                    if (selectedElements.length == 0) {
-                        openListItemOptions(row);
-                    } else {
-                        selectElement(item.id);
-                    }
+                row.find(".show-options button.more").on("click", () => {
+                    openListItemOptions(row);
+                });
+                row.find(".show-options button.print").on("click", () => {
+                    printElement = row;
+                    print();
                 });
                 row.on("contextmenu", (e) => {
                     e.preventDefault();
