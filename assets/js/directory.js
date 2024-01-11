@@ -25,11 +25,12 @@ $(database).on("loaded", async (_, data) => {
         });
 
         // Set the page header to "Pricing Database Directory".
-        $("#page-header").html("Pricing Database Directory");
+        $("#page-header").html("<h1>Pricing Database Directory</h1>");
 
         // Create a new Pagination object and replace the existing pagination with it.
         let pag = new Pagination(database);
         $(".pagination").replaceWith(pag.getPaginationHTML());
+        document.title = `Pricing Database`;
     }
     // If the data type is a location...
     else if (data.type == listTypes.location) {
@@ -65,7 +66,12 @@ $(database).on("loaded", async (_, data) => {
         }
 
         // Set the page header to the location name.
-        $("#page-header").html(`${database.listData.name}#${database.listData.po}`);
+        $("#page-header").html(` 
+        <h1> <img src="/assets/images/locations/${database.listData.image}" width="70px" style="object-fit: contain;"><span style="font-size:3.4375rem">${database.listData.name}</span></h1>
+        <h2 style="font-weight: 500">Location: <b>${database.listData.location}</b></h2>
+        <p>PO#: <b>${database.listData.po}</b><br>Date Posted: <b>${new Date(database.listData.post_date).toLocaleString()}</b></p>`);
+        document.title = `${database.listData.name}#${database.listData.po} - Pricing Database`;
+        // $("#page-header").html(`${database.listData.name}#${database.listData.po}`);
     }
 
     // Add the "search-table" class to the table.
