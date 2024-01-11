@@ -4,11 +4,11 @@
             <div class="title fill">Edit Item</div>
             <button class="close">x</button>
         </div>
-
-        <div class="form-input">
-            <label for="">UPC</label>
-            <input type="text" name="upc" id="upc" placeholder="UPC" autocomplete="off">
+        <div class="popup-body">
+            <div class="form-input">
+                <label for="">UPC</label>
+                <input type="text" name="upc" id="upc" placeholder="UPC" autocomplete="off">
+            </div>
         </div>
-
     </div>
 </div>
