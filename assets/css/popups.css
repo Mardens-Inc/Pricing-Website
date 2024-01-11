@@ -55,13 +55,19 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -70%);
-    overflow-y: auto;
     opacity: 0;
     transition: opacity, transform;
     transition-duration: 200ms;
     transition-delay: 100ms;
     max-height: 500px;
+}
+
+.popup .popup-content .popup-body{
     overflow-y: scroll;
+    width: 100%;
+    max-height: inherit;
+    padding-right: 1rem;
+    padding-right: 1rem;
 }
 
 .popup.active .popup-content {
