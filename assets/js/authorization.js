@@ -20,8 +20,9 @@ function displayAdminActions() {
     // Check if the user is already logged in or not.
     // If the user is logged in, display the admin panel, otherwise display the login screen.
     const auth = new Authentication();
-    $("#admin-login").html(auth.admin ? "Logout" : "Administrator Login");
-    $("#admin-login").on("click", () => {
+    const adminLoginElement = $("#admin-login");
+    adminLoginElement.html(auth.admin ? "Logout" : "Administrator Login");
+    adminLoginElement.on("click", () => {
         if (auth.admin) {
             displayAdminActions();
         } else {
@@ -43,15 +44,10 @@ function displayAdminActions() {
         `);
     });
 
-    // When the login button is clicked, check the username and password
-    $("#admin-login-popup.popup #login").on("click", () => {});
-
-    // If the user clicks the login button, attempt to login with the credentials provided.
-    $(".popup .login").on("click", handleLogin);
-
-    // If the user presses the enter key, attempt to login with the credentials provided.
-    $("#admin-login-popup.popup input").on("keypress", (e) => {
-        if (e.key == "Enter") handleLogin();
+    // When the login form is submitted, check the username and password
+    $("#admin-login-popup.popup form").on("submit", () => {
+        alert('hi')
+        handleLogin();
     });
 
     /**
