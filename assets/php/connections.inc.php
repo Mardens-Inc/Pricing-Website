@@ -11,6 +11,7 @@ class DB_Connect
      */
     public static function connect(): mysqli
     {
+        global $DB_HOST, $DB_USER, $DB_PASSWORD, $DB_NAME;
         require_once 'config.inc.php';
 
         // Connecting to mysql database
