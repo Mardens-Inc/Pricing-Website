@@ -1,3 +1,5 @@
+import {Authentication as auth} from "/assets/lib/mardens-auth-lib";
+
 /**
  * Handles the authentication of the user.
  * @class Authentication
@@ -14,6 +16,7 @@
  */
 class Authentication {
     constructor() {
+        this.auth = new auth();
         this.admin = false;
         this.inactivityTimer;
         this.resetInactivityTimer();
@@ -33,14 +36,7 @@ class Authentication {
      * @returns {object} The data returned from the server
      */
     async loginWithToken() {
-        let data = await $.ajax({
-            url: "/api/auth.php",
-            method: "POST",
-        });
-        if (!this.handleAuthData(data)) {
-            console.error(`Error logging in with token: ${data.error}`);
-        }
-        return data;
+        return await this.auth.loginWithTokenFromCookie();
     }
 
     /**
@@ -51,25 +47,18 @@ class Authentication {
      */
     async login(username, password) {
         $("#login-error").html("");
-        let data = await $.ajax({
-            url: "/api/auth.php",
-            method: "POST",
-            data: {
-                username: username,
-                password: password,
-            },
-        });
+
+        const data = await this.auth.login(username, password);
         if (!this.handleAuthData(data)) {
             console.error(`Error logging in: ${data.error}`);
         }
-        return data;
     }
 
     /**
      * Logs out the user by clearing the authentication token and reloading the page.
      */
     logout() {
-        document.cookie = "auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        this.auth.logout();
         window.location.reload();
     }
 
@@ -77,15 +66,9 @@ class Authentication {
      * Checks if the user is logged in
      * @returns {boolean} Whether or not the user is logged in
      */
-    isLoggedIn() {
-        document.cookie.split(";").forEach(async (item) => {
-            let key = item.split("=")[0].trim();
-            if (key == "auth-token") {
-                let data = await this.loginWithToken();
-                return data.success;
-            }
-        });
-        return false;
+    async isLoggedIn() {
+        let data = await this.loginWithToken();
+        return data.error === undefined;
     }
 
     /**
@@ -95,7 +78,7 @@ class Authentication {
      * When the timer expires, it will call the logout function, remove the active class from any popup element, and display the admin login.
      */
     resetInactivityTimer() {
-        if (this.inactivityTimer != undefined) clearTimeout(this.inactivityTimer);
+        if (this.inactivityTimer !== undefined) clearTimeout(this.inactivityTimer);
 
         if (!this.admin) return;
 
@@ -112,9 +95,7 @@ class Authentication {
      * @returns {boolean} - Indicates whether the authorization was successful.
      */
     handleAuthData(data) {
-        if (data.success) {
-            let expiration = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 days
-            document.cookie = `auth-token=${data.user.token}; expires=${expiration.toUTCString()}; path=/;SameSite=Strict;`;
+        if (data.error === undefined) {
             this.admin = true;
             this.resetInactivityTimer();
             $(this).trigger("logged-in");
