@@ -1,6 +1,7 @@
 {
     "require": {
         "hashids/hashids": "^5.0",
-        "halaxa/json-machine": "^1.1"
+        "halaxa/json-machine": "^1.1",
+        "ext-mysqli": "*"
     }
 }
