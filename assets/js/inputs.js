@@ -1,9 +1,3 @@
-// Add a submit event listener to all form elements.
-// Prevent the default form submission behavior.
-$("form").on("submit", (e) => {
-    e.preventDefault();
-});
-
 // Add a dragover event listener to all elements with the class "drag-drop-area".
 // Prevent the default dragover behavior and add the "dragover" class to the target element.
 $(".drag-drop-area").on("dragover", (e) => {
