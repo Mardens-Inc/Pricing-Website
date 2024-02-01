@@ -89,7 +89,7 @@ $("toggle").on("click", (e) => {
     // Set the "value" attribute of the target to the opposite of its current value.
     target.attr("value", !value);
     // Trigger a "toggle" event on the target with the new value.
-    target.trigger("toggle", [{ value: !value }]);
+    target.trigger("toggle", [{value: !value}]);
 });
 
 /**
@@ -110,9 +110,23 @@ function closePopup() {
  * Opens the popup with the specified id.
  * @param {string} id The id of the popup to open.
  */
-function openPopup(id){
+function openPopup(id) {
     // Sets the popup with the specified id to active.
     $(`#${id}`).addClass("active");
     // Sets the CSS overflow property of the body to hidden to prevent scrolling.
     $("body").css("overflow", "hidden");
+}
+
+function startLoading() {
+    // Add the "loading" class to the body to disable scrolling.
+    $("body").append("<div id='js-loader'><div class='loading'></div></div>");
+}
+
+function stopLoading() {
+    // Remove the "loading" class from the body to enable scrolling.
+    $("#js-loader").remove();
+}
+
+function isLoading() {
+    return $("#js-loader .loading").length > 0;
 }
