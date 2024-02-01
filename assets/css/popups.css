@@ -62,8 +62,8 @@
     max-height: 500px;
 }
 
-.popup .popup-content .popup-body{
-    overflow-y: scroll;
+.popup .popup-content .popup-body {
+    overflow-y: auto;
     width: 100%;
     max-height: inherit;
     padding-right: 1rem;
