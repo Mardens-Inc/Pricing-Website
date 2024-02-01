@@ -37,7 +37,7 @@ adminLoginElement.on("click", () => {
     }
 });
 
-$(auth).on("login", () => {
+$(auth).on("logged-in", () => {
     // Change the button text to "Admin Actions"
     $("#admin-login").html("Admin Actions");
     // Hide the popup
