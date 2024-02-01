@@ -51,11 +51,12 @@ $(auth).on("login", () => {
 });
 
 $(auth).on("logout", () => {
-    window.reload();
+    window.location.reload();
 })
 
 // When the login form is submitted, check the username and password
 $("#admin-login-popup.popup form").on("submit", async e => {
+    startLoading();
     const target = $(e.target);
 
     // Clear the error message.
@@ -68,7 +69,15 @@ $("#admin-login-popup.popup form").on("submit", async e => {
 
     try {
         // Attempt to login.
-        await auth.login(username, password);
+        const response = await auth.login(username, password);
+        if (!response.success) {
+            if (response.message !== undefined) {
+                target.find("#login-error").html(response.message);
+            } else {
+                target.find("#login-error").html("An unknown error occurred.");
+            }
+        }
+        console.log(response);
     } catch (e) {
         if (e.responseJSON !== undefined && e.responseJSON.message !== undefined) {
             target.find("#login-error").html(e.responseJSON.message);
@@ -76,4 +85,11 @@ $("#admin-login-popup.popup form").on("submit", async e => {
             target.find("#login-error").html("An unknown error occurred.");
         }
     }
+    stopLoading();
+});
+
+$(".logout").on("click", () => {
+    startLoading();
+    closePopup();
+    auth.logout();
 });
