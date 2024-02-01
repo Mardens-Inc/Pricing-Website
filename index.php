@@ -21,7 +21,7 @@
     <link rel="stylesheet" href="/assets/fonts/fonts.min.css">
 
     <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="/assets/lib/jquery-3.7.1.min.js"></script>
 
     <!-- FontAwesome -->
     <script src="/assets/lib/fontawesome-free-6.5.1-web/js/all.min.js" defer></script>
