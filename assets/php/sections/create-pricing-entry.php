@@ -5,13 +5,27 @@
             <button class="close">x</button>
         </div>
         <div class="popup-body">
-            <form class="form-input">
-                <div class="drag-drop-area" id="upload-pricing-data" accept="*.xlsx, *.csv"> </div>
-                <div id="comparison-form" class="col fill">
-                </div>
+            <div class="row">
+                <form class="form-input">
+                    <div class="drag-drop-area" id="upload-pricing-data" accept="*.xlsx, *.csv"></div>
+                    <div id="comparison-form" class="col fill">
+                    </div>
 
-                <button id="upload-pricing-data-button">Upload</button>
-            </form>
+                    <button id="upload-pricing-data-button">Upload</button>
+                </form>
+                <h2>OR</h2>
+                <form class="form-input">
+                    <h3>Import from Filemaker</h3>
+                    <label for="filemaker-db">Database</label>
+                    <select name="filemaker-db" id="filemaker-db">
+                        <option value="none">None</option>
+                    </select>
+                    <label for="filemaker-layout">Table</label>
+                    <select name="filemaker-layout" id="filemaker-layout">
+                        <option value="none">None</option>
+                    </select>
+                </form>
+            </div>
         </div>
     </div>
 </div>
