@@ -1,3 +1,5 @@
+import Authentication from "https://auth.mardens.com/js/authentication.js";
+
 /**
  * Displays the admin login popup and sets focus on the username input field.
  */
