@@ -3,3 +3,4 @@ config.json
 .idea/
 error.log
 /assets/lib/mardens-auth-lib.js
+composer.lock
