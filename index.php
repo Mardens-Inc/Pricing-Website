@@ -1,34 +1,4 @@
-<?php
-
-$url = "https://auth.mardens.com";
-$file = $_SERVER['DOCUMENT_ROOT'] . "/assets/lib/mardens-auth-lib.js";
-// Get last modified time of the url
-// Ignore ssl errors
-$last_modified = file_get_contents($url . "/?time", false, stream_context_create([
-    'http' => [
-        'method' => 'GET',
-        'header' => 'Content-Type: text/plaintext'
-    ], 'ssl' => [
-        'verify_peer' => false,
-        'verify_peer_name' => false,
-    ],
-]));
-$last_modified = intval($last_modified);
-
-if (!file_exists($file) || $last_modified >= filemtime($file)) {
-    // Download the file
-    file_put_contents($file, file_get_contents($url . "/", false, stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'header' => 'Content-Type: text/javascript'
-        ], 'ssl' => [
-            'verify_peer' => false,
-            'verify_peer_name' => false,
-        ],
-    ])));
-}
-
-?>
+<?php require_once "assets/php/FetchAuthenticationAPI.php"; ?>
 
 <!DOCTYPE html>
 <html lang="en">
@@ -61,7 +31,6 @@ if (!file_exists($file) || $last_modified >= filemtime($file)) {
 
     <!-- Setup JS Classes -->
     <script src="/assets/js/database.js"></script>
-    <script src="/assets/js/authentication.js"></script>
     <script src="/assets/js/parsing.js"></script>
 
 </head>
@@ -104,7 +73,7 @@ if (!file_exists($file) || $last_modified >= filemtime($file)) {
 
 <?php require_once "assets/php/sections/popups.php"; ?>
 
-<script type="module" src="/assets/js/authorization.js"></script>
+<script type="module" src="/assets/js/authentication.js"></script>
 <script src="/assets/js/directory.js"></script>
 <script src="/assets/js/inputs.js"></script>
 <script src="/assets/js/voice-search.js"></script>
