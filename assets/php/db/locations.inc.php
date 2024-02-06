@@ -10,9 +10,10 @@ class Locations
 {
     private $connection;
     private $hashids;
+
     public function __construct()
     {
-        require_once $_SERVER["DOCUMENT_ROOT"] .  "/assets/php/connections.inc.php";
+        require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/connections.inc.php";
         $this->connection = DB_Connect::connect(); // Connect to locations database
         if (!$this->connection) {
             die($this->connection->error);
@@ -72,8 +73,8 @@ class Locations
         $locations = array();
         while ($row = $result->fetch_assoc()) {
             $row["id"] = $this->hashids->encode($row["id"]);
-            array_push($row, $this->get_image($row["id"]));
-            array_push($locations, $row);
+            $row[] = $this->get_image($row["id"]);
+            $locations[] = $row;
         }
 
         $count = 0;
@@ -103,6 +104,7 @@ class Locations
             return array(); // If the query failed, return an empty array
         }
         $row = $result->fetch_assoc();
+        $row["options"] = json_decode($row["options"], true);
         $row["id"] = $this->hashids->encode($row["id"]);
         return $row;
     }
@@ -118,12 +120,11 @@ class Locations
      */
     public function add(string $name, string $location, string $po, string $image, array $rows): array
     {
-        // Dirty insert query, no sanitization.
-        $sql = "INSERT INTO locations (name, location, po, image) VALUES ('$name', '$location', '$po', '$image')";
-        $result = $this->connection->query($sql);
+        // Prepared Insert query, with proper sanitization.
+        $stmt = $this->connection->prepare("INSERT INTO locations (name, location, po, image) VALUES (?, ?, ?, ?)");
+        $stmt->bind_param("ssss", $name, $location, $po, $image);
 
-
-        if (!$result) {
+        if (!$stmt->execute()) {
             return ["success" => false, "error" => "Failed to insert into table!"]; // If the query failed
         }
 
@@ -177,8 +178,8 @@ class Locations
 
     /**
      * Check if a location has an image
-     * @param int $id The Hash ID of the location to check
-     * @return bool Whether the location has an image
+     * @param string $id The Hash ID of the location to check
+     * @return array Whether the location has an image
      */
     public function has_image(string $id): array
     {
@@ -194,25 +195,25 @@ class Locations
         foreach (glob($target_dir . "*.png") as $filename) {
             $filename = str_replace($target_dir, "", $filename);
             $name = str_replace(".png", "", $filename);
-            array_push($images, ["name" => $name, "url" => (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $filename, "file" => $filename]);
+            $images[] = ["name" => $name, "url" => (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $filename, "file" => $filename];
         }
         return $images;
     }
 
     /**
      * Get the image of a location
-     * @param int $id The Hash ID of the location to get the image of
+     * @param string $id The Hash ID of the location to get the image of
      * @return array An array containing whether the operation was successful and the image URL
      */
     public function get_image(string $id): array
     {
-        $target_dir = $_SERVER["DOCUMENT_ROOT"] . "/assets/images/locations/";
-        $target_file = $target_dir . $id . '.png';
-        if (!file_exists($target_file)) {
+        $item = $this->byID($id);
+        if (empty($item) || empty($item["image"])) {
             return ["success" => false];
+        } else {
+            $url = (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $item["image"];
+            return ["success" => true, "image" => $url];
         }
-        $networked_location = (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $id . '.png';
-        return ["success" => true, "image" => $networked_location];
     }
 
 
@@ -240,5 +241,46 @@ class Locations
             return ["success" => false];
         }
         return ["success" => true];
+    }
+
+    /**
+     * Extract location data from the supplied OpenGraph JSON and return as an array
+     *
+     * @param bool $insert [optional] Whether to insert the data into the database. Default is false.
+     * @return array An array containing the extracted location data
+     */
+    public function from_og($insert = false): array
+    {
+        $json = file_get_contents("https://fm.mardens.com/fmDataFiles/db_list.txt");
+        try {
+            $json = json_decode($json, true);
+        } catch (Exception $e) {
+            // Failed to parse the json.
+            return ["success" => false, "error" => $e->getMessage()];
+        }
+
+        $locations = [];
+        $json = $json["data"];
+        foreach ($json as $item) {
+            $location = [];
+            $location["name"] = $item["name"];
+            $location["location"] = $item["loc"];
+            $location["po"] = $item["poNum"];
+            $location["options"] = [];
+            $location["image"] = $item["icon"];
+            $location["posted_date"] = $item["date"];
+            $locations[] = $location;
+        }
+
+        if ($insert) {
+            foreach ($locations as $location) {
+                $result = $this->add($location["name"], $location["location"], $location["po"], $location["image"], $location["options"]);
+                if (!$result) {
+                    return ["success" => false, "error" => "Failed to insert into table!", "item" => $location]; // If the query failed
+                }
+            }
+        }
+
+        return ["success" => true, "locations" => $locations];
     }
 }
