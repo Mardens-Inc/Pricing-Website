@@ -111,11 +111,11 @@ class Locations
 
     /**
      * Add a location to the database
-     * @param int $list_id The ID of the list table to link the location to
      * @param string $name The name of the location, eg "Walmart"
      * @param string $location The location name/address of the location, eg "123 Main St, City, State"
      * @param string $po The PO of the location
      * @param string $image The icon/logo of the location
+     * @param array $rows
      * @return array An array containing the ID of the newly inserted location and whether the operation was successful
      */
     public function add(string $name, string $location, string $po, string $image, array $rows): array
@@ -249,7 +249,7 @@ class Locations
      * @param bool $insert [optional] Whether to insert the data into the database. Default is false.
      * @return array An array containing the extracted location data
      */
-    public function from_og($insert = false): array
+    public function from_og(bool $insert = false): array
     {
         $json = file_get_contents("https://fm.mardens.com/fmDataFiles/db_list.txt");
         try {
@@ -269,18 +269,29 @@ class Locations
             $location["options"] = [];
             $location["image"] = $item["icon"];
             $location["posted_date"] = $item["date"];
+            $location["connection"] = $item["connection"];
             $locations[] = $location;
         }
+        if (!$insert) return ["success" => true, "locations" => $locations];
+        $insertedLocations = 0;
+        $failedLocations = 0;
+        $insertedLocationItems = 0;
+        $failedLocationItems = 0;
+        foreach ($locations as $location) {
 
-        if ($insert) {
-            foreach ($locations as $location) {
-                $result = $this->add($location["name"], $location["location"], $location["po"], $location["image"], $location["options"]);
-                if (!$result) {
-                    return ["success" => false, "error" => "Failed to insert into table!", "item" => $location]; // If the query failed
+            if (isset($location["connection"]["db_name"]) && isset($location["connection"]["table"])) {
+                $result = $this->add($location["name"], $location["location"], $location["po"], $location["image"], []);
+                if ($result["success"]) {
+                    $insertedLocations++;
+                } else {
+                    $failedLocations++;
                 }
             }
         }
-
-        return ["success" => true, "locations" => $locations];
+        $stats["locations"]["inserted"] = $insertedLocations;
+        $stats["locations"]["failed"] = $failedLocations;
+        $stats["items"]["inserted"] = $insertedLocationItems;
+        $stats["items"]["failed"] = $failedLocationItems;
+        return ["success" => true, "stats" => $stats, "locations" => $locations];
     }
 }
