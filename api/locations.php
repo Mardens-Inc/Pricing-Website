@@ -6,6 +6,11 @@ use Slim\Factory\AppFactory;
 require_once $_SERVER['DOCUMENT_ROOT'] . "/vendor/autoload.php";
 require_once($_SERVER["DOCUMENT_ROOT"] . "/assets/php/db/locations.inc.php");
 
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: *");
+header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
+
+
 $app = AppFactory::create();
 $app->setBasePath("/api/locations");
 $app->addRoutingMiddleware();
