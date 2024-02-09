@@ -73,7 +73,7 @@ class Locations
         $locations = array();
         while ($row = $result->fetch_assoc()) {
             $row["id"] = $this->hashids->encode($row["id"]);
-            $row[] = $this->get_image($row["id"]);
+            $row["image"] = @$this->get_image($row["id"])["image"] ?? "";
             $locations[] = $row;
         }
 
@@ -89,6 +89,27 @@ class Locations
         }
 
         return ["total_results" => $count, "max_count" => $max_count, "page" => $page, "success" => true, "items" => $locations];
+    }
+
+    /**
+     * Get a list of all locations
+     *
+     * @return array An array of all locations, where each location is represented as an associative array
+     */
+    public function listAll(): array
+    {
+        $sql = "SELECT * FROM locations ORDER BY id DESC";
+        $result = $this->connection->query($sql);
+        if (!$result) {
+            return []; // If the query failed, return an empty array
+        }
+        $locations = [];
+        while ($row = $result->fetch_assoc()) {
+            $row["id"] = $this->hashids->encode($row["id"]);
+            $row["image"] = @$this->get_image($row["id"])["image"] ?? "";
+            $locations[] = $row;
+        }
+        return $locations;
     }
 
     function byID(string $id): array
@@ -207,7 +228,7 @@ class Locations
      */
     public function get_image(string $id): array
     {
-        $item = $this->byID($id);
+        $item = @$this->byID($id);
         if (empty($item) || empty($item["image"])) {
             return ["success" => false];
         } else {
@@ -269,7 +290,6 @@ class Locations
             $location["options"] = [];
             $location["image"] = $item["icon"];
             $location["posted_date"] = $item["date"];
-            $location["connection"] = $item["connection"];
             $locations[] = $location;
         }
         if (!$insert) return ["success" => true, "locations" => $locations];
