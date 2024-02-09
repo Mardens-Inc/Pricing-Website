@@ -278,14 +278,11 @@ class Locations
         $insertedLocationItems = 0;
         $failedLocationItems = 0;
         foreach ($locations as $location) {
-
-            if (isset($location["connection"]["db_name"]) && isset($location["connection"]["table"])) {
-                $result = $this->add($location["name"], $location["location"], $location["po"], $location["image"], []);
-                if ($result["success"]) {
-                    $insertedLocations++;
-                } else {
-                    $failedLocations++;
-                }
+            $result = $this->add($location["name"], $location["location"], $location["po"], $location["image"], []);
+            if ($result["success"]) {
+                $insertedLocations++;
+            } else {
+                $failedLocations++;
             }
         }
         $stats["locations"]["inserted"] = $insertedLocations;

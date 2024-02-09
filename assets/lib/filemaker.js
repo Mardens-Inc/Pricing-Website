@@ -24,10 +24,10 @@ export class FilemakerRecord {
      */
     static fromJSON(json) {
         let record = new FilemakerRecord();
-        if (json === [] || json.fields === undefined || json.portalData === undefined || json.recordId === undefined || json.modId === undefined) {
+        if (json === [] || json.fieldData === undefined || json.portalData === undefined || json.recordId === undefined || json.modId === undefined) {
             return record;
         }
-        record.fields = json.fields;
+        record.fields = json.fieldData;
         record.portalData = json.portalData;
         record.recordId = json.recordId;
         record.modId = json.modId;
