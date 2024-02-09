@@ -25,6 +25,11 @@ $app->get("/", function ($request, $response, $args) {
     $items = $loc->list($max, $page, $sort, isset($_GET['asc']), "");
     return $response->withHeader("Content-Type", "application/json")->withJson($items);
 });
+$app->get("/all", function ($request, $response, $args) {
+    $loc = new Locations();
+    $items = $loc->listAll();
+    return $response->withHeader("Content-Type", "application/json")->withJson($items);
+});
 
 $app->get("/images", function ($request, $response, $args) {
     $loc = new Locations();
