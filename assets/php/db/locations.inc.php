@@ -127,6 +127,8 @@ class Locations
         $row = $result->fetch_assoc();
         $row["options"] = json_decode($row["options"], true);
         $row["id"] = $this->hashids->encode($row["id"]);
+        $row["image"] = strtolower($row["image"]);
+
         return $row;
     }
 
@@ -230,9 +232,10 @@ class Locations
     {
         $item = @$this->byID($id);
         if (empty($item) || empty($item["image"])) {
-            return ["success" => false];
+            return ["success" => false, "image" => ""];
         } else {
-            $url = (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $item["image"];
+            $file = "/assets/images/locations/" . $item["image"];
+            $url = (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . $file . "?v=" . filemtime($_SERVER["DOCUMENT_ROOT"] . $file);
             return ["success" => true, "image" => $url];
         }
     }
