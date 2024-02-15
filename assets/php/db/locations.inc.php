@@ -8,16 +8,13 @@ use Hashids\Hashids;
  */
 class Locations
 {
-    private $connection;
-    private $hashids;
+    private mysqli $connection;
+    private Hashids $hashids;
 
     public function __construct()
     {
         require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/connections.inc.php";
         $this->connection = DB_Connect::connect(); // Connect to locations database
-        if (!$this->connection) {
-            die($this->connection->error);
-        }
         $this->hashids = new Hashids($_ENV["HASH_SALT"], 10);
 
         // Create the locations table if it doesn't exist
