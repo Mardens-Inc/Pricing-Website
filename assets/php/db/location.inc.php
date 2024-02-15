@@ -8,30 +8,29 @@ use Hashids\Hashids;
  */
 class Location
 {
-    private $connection;
-    private $hashids;
-    public function __construct()
+    private mysqli $connection;
+    private Hashids $hashids;
+    private string $id;
+
+    public function __construct(string $id)
     {
-        require_once $_SERVER["DOCUMENT_ROOT"] .  "/assets/php/connections.inc.php";
+        require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/connections.inc.php";
         $this->connection = DB_Connect::connect(); // Connect to locations database
-        if (!$this->connection) {
-            die($this->connection->error);
-        }
         $this->hashids = new Hashids($_ENV["HASH_SALT"], 10);
+        $this->id = $id;
     }
 
     /**
      * Add a location to the database
-     * @param string $id The ID of the location to add the pricing to
      * @param array $json The JSON data to add to the database
      * @return array An array containing the ID of the newly inserted location and whether the operation was successful
      */
-    public function add(string $id, array $json): array
+    public function add(array $json): array
     {
         $keys = array_keys($json);
         $values = $json[$keys[0]]; // Assuming all arrays have the same length
 
-        $sqls = array();
+        $sqls = [];
         $failed = 0;
         $inserted = 0;
 
@@ -43,7 +42,7 @@ class Location
                 $allBlank = true;
                 foreach ($keys as $key) {
                     // Use isset to check if the key exists before accessing it
-                    $value = isset($json[$key][$i]) ? $json[$key][$i] : null;
+                    $value = $json[$key][$i] ?? null;
                     $value = trim($value);
                     $value = mysqli_real_escape_string($this->connection, $value);
 
@@ -58,7 +57,7 @@ class Location
                     continue;
                 }
 
-                $sql = "INSERT INTO `$id`(`" . implode('`, `', $keys) . "`) VALUES (" . implode(',', $insert_values) . ")";
+                $sql = "INSERT INTO `$this->id`(`" . implode('`, `', $keys) . "`) VALUES (" . implode(',', $insert_values) . ")";
                 $sqls[] = $sql;
             } catch (Exception $e) {
                 $failed++;
@@ -86,17 +85,16 @@ class Location
 
     /**
      * Edit a location in the database
-     * @param string $id The ID of the location to edit the pricing of
      * @param array $json The JSON data to edit in the database
      * @return array An array containing the ID of the newly inserted location and whether the operation was successful
      */
-    public function edit(string $id, array $json): array
+    public function edit(array $json): array
     {
         // $id = $this->hashids->decode($id)[0];
         $itemId = $json["id"];
         $itemId = $this->hashids->decode($itemId)[0];
         unset($json["id"]);
-        $sql = "UPDATE `$id` SET ";
+        $sql = "UPDATE `$this->id` SET ";
 
         $keys = array_keys($json);
         for ($i = 0; $i < count($keys); $i++) {
@@ -116,10 +114,8 @@ class Location
     }
 
 
-
     /**
      * Gets a list of locations
-     * @param int $id The ID of the location to get the pricing from
      * @param int $max_count The maximum number of locations to return. 0 or blank for all locations
      * @param int $page The offset to start from, ie the page number
      * @param string $sort The column to sort by
@@ -127,12 +123,12 @@ class Location
      * @param string $query The search query to filter by
      * @return array An array of locations
      */
-    public function list(string $id, int $max_count = 0, int $page = 0, string $sort = "", bool $ascending = true, string $query = ""): array
+    public function list(int $max_count = 0, int $page = 0, string $sort = "", bool $ascending = true, string $query = ""): array
     {
         // If max_count is 0, return all locations
-        $sql = "SELECT * FROM `$id`";
+        $sql = "SELECT * FROM `$this->id`";
         if (!empty($query)) {
-            $columns = $this->getColumns($id);
+            $columns = $this->getColumns($this->id);
             if (!$columns["success"]) {
                 return ["success" => false, "error" => "Failed to get columns"];
             }
@@ -160,7 +156,7 @@ class Location
 
         $result = $this->connection->query($sql);
         if (!$result) {
-            return ["success" => false, "error" => "Failed to send query to database '$id'"]; // If the query failed, return an empty array
+            return ["success" => false, "error" => "Failed to send query to database '$this->id'"]; // If the query failed, return an empty array
         }
 
         // Make an array of locations from the query results
@@ -172,9 +168,9 @@ class Location
 
         $count = 0;
 
-        $sql = "SELECT COUNT(*) FROM `$id`";
+        $sql = "SELECT COUNT(*) FROM `$this->id`";
         if (!empty($query)) {
-            $columns = $this->getColumns($id);
+            $columns = $this->getColumns($this->id);
             if (!$columns["success"]) {
                 return ["success" => false, "error" => "Failed to get columns"];
             }
@@ -197,16 +193,14 @@ class Location
     /**
      * Gets the columns of a table in the database
      *
-     * @param string $id The id of the table to get the columns of
-     *
      * @return array An array with the keys "success" and "columns". If the "success" key is false, there was an error. If the "success" key is true, the "columns" key will contain an array with all the columns
      */
-    public function getColumns(string $id): array
+    public function getColumns(): array
     {
         try {
 
             // Send the query to the database
-            $sql = "SHOW COLUMNS FROM `$id`";
+            $sql = "SHOW COLUMNS FROM `$this->id`";
             $result = $this->connection->query($sql);
 
             if ($this->connection->error)
@@ -214,13 +208,13 @@ class Location
 
             // If the query failed, return an empty array
             if (!$result) {
-                return ["success" => false, "error" => "Failed to send query to database '$id'"];
+                return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
             }
 
             // Get all the columns from the result
             $columns = [];
             while ($row = $result->fetch_assoc()) {
-                array_push($columns, $row["Field"]);
+                $columns[] = $row["Field"];
             }
 
             // Return the columns
@@ -231,18 +225,164 @@ class Location
     }
 
     /**
-     * Deletes all records from a table
-     * @param string $id The ID of the table to delete all records from
+     * Sets the columns of the "locations" table based on the given array
+     *
+     * @param array $columns An array containing the column names to be set
      * @return array An array containing the success status and error message if applicable
      */
-    public function deleteAllRecords(string $id)
+    public function setColumns(array $columns): array
+    {
+        $currentColumns = $this->getColumns();
+        if (!$currentColumns["success"]) {
+            return ["success" => false, "error" => "Failed to get current columns"];
+        }
+        $currentColumns = $currentColumns["columns"];
+        foreach ($columns as $column) {
+            if ($column == "id" || $column == "date") continue;
+            if (!in_array($column, $currentColumns)) {
+                $sql = "ALTER TABLE `$this->id` ADD COLUMN `$column` TEXT";
+                $result = $this->connection->query($sql);
+                if (!$result) {
+                    return ["success" => false, "error" => "Failed to add column '$column'"];
+                }
+            }
+        }
+
+        foreach ($currentColumns as $column) {
+            if ($column == "id" || $column == "date") continue;
+            if (!in_array($column, $columns)) {
+                $sql = "ALTER TABLE `locations` DROP COLUMN `$column`";
+                $result = $this->connection->query($sql);
+                if (!$result) {
+                    return ["success" => false, "error" => "Failed to remove column '$column'"];
+                }
+            }
+        }
+        return ["success" => true];
+    }
+
+    /**
+     * Imports records from FileMaker to the database.
+     *
+     * @param string $username The username for authentication with the FileMaker API.
+     * @param string $password The password for authentication with the FileMaker API.
+     * @param string $database The name of the FileMaker database.
+     * @param string $layout The name of the FileMaker layout.
+     * @return array An array containing the success status and error message if applicable.
+     */
+    public function importFromFilemaker(string $username, string $password, string $database, string $layout): array
+    {
+        $this->deleteAllRecords();
+        $url = "https://lib.mardens.com/fmutil/databases/$database/layouts/$layout/records/all";
+        $authHeader = "X-Authentication-Options:" . json_encode(["username" => $username, "password" => $password]);
+        $stream_context = @stream_context_create([
+            "http" => [
+                "header" => $authHeader,
+                "method" => "GET",
+                "ignore_errors" => true
+            ],
+            "ssl" => [
+                "verify_peer" => false,
+                "verify_peer_name" => false
+            ]
+        ]);
+
+        $response = @file_get_contents($url, false, $stream_context);
+        try {
+            $response = json_decode($response, true);
+        } catch (Exception $e) {
+            return ["success" => false, "error" => "Failed to parse json from the filemaker api", "message" => $e->getMessage()];
+        }
+
+        if (!$response) {
+            return ["success" => false, "error" => "Failed to get response from filemaker api"];
+        }
+
+        $columns = $this->get_columns_from_filemaker($username, $password, $database, $layout);
+        if (!$columns["success"]) {
+            return ["success" => false, "error" => "Failed to get columns from filemaker"];
+        }
+        $columns = $columns["columns"];
+        $this->setColumns($columns);
+        $columns = implode(",", $columns);
+
+        // create tmp directory if it doesn't exist
+        if (!file_exists("{$_SERVER["DOCUMENT_ROOT"]}/tmp")) {
+            mkdir("{$_SERVER["DOCUMENT_ROOT"]}/tmp");
+        }
+
+        $file = "{$_SERVER["DOCUMENT_ROOT"]}/tmp/$this->id.json";
+        $log = "{$_SERVER["DOCUMENT_ROOT"]}/tmp/$this->id.log";
+
+        file_put_contents($file, json_encode($response));
+
+        require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/config.inc.php";
+        global $DB_USER, $DB_PASSWORD, $DB_NAME;
+
+
+        $command = $_SERVER["DOCUMENT_ROOT"] . "/exec/BulkImportSQL";
+        $args = "-i \"$file\" -s localhost -d \"$DB_NAME\" -t \"$this->id\" -u \"$DB_USER\" -p \"$DB_PASSWORD\" -e fieldData -n -c \"$columns\"";
+
+        // Determine the right command for the system's OS
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            // Windows
+            $command .= ".exe";
+            $command = "start /B $command $args > $log";
+        } else {
+            // Unix/Linux
+            $command = "$command $args > $log 2>&1 &";
+        }
+
+        // Execute command
+        exec($command);
+
+        return ["success" => true];
+
+    }
+
+    private function get_columns_from_filemaker(string $username, string $password, string $database, string $layout): array
+    {
+        $url = "https://lib.mardens.com/fmutil/databases/$database/layouts/$layout/fields";
+        $stream_context = stream_context_create([
+            "http" => [
+                "header" => "X-Authentication-Options:" . json_encode(["username" => $username, "password" => $password]),
+                "method" => "GET",
+                "ignore_errors" => true,
+            ],
+            // ignore ssl
+            "ssl" => [
+                "verify_peer" => false,
+                "verify_peer_name" => false
+            ]
+        ]);
+
+        $response = @file_get_contents($url, false, $stream_context);
+        try {
+            $response = json_decode($response, true);
+        } catch (Exception $e) {
+            return ["success" => false, "error" => "Failed to parse json from the filemaker api", "message" => $e->getMessage()];
+        }
+
+        if (!$response) {
+            return ["success" => false, "error" => "Failed to get response from filemaker api"];
+        }
+
+        return ["success" => true, "columns" => $response];
+    }
+
+
+    /**
+     * Deletes all records from a table
+     * @return array An array containing the success status and error message if applicable
+     */
+    public function deleteAllRecords()
     {
         http_response_code(500);
-        $sql = "truncate table `$id`";
+        $sql = "truncate table `$this->id`";
         $this->connection->query($sql);
         if ($this->connection->error)
             return ["success" => false, "error" => $this->connection->error];
-        $sql = "ALTER TABLE `$id` AUTO_INCREMENT = 1";
+        $sql = "ALTER TABLE `$this->id` AUTO_INCREMENT = 1";
         $this->connection->query($sql);
         if ($this->connection->error)
             return ["success" => false, "error" => $this->connection->error];
@@ -252,16 +392,16 @@ class Location
 
     /**
      * Delete a location price from the database
-     * @param int $id The ID of the location price to delete
+     * @param string $item The ID of the location to delete
      */
-    public function delete(string $id, string $item): array
+    public function delete(string $item): array
     {
         $item = $this->hashids->decode($item)[0];
-        $sql = "DELETE FROM `$id` WHERE id = $item LIMIT 1";
+        $sql = "DELETE FROM `$this->id` WHERE id = $item LIMIT 1";
         $result = $this->connection->query($sql);
         if (!$result) {
-            return ["success" => false, "error" => "Failed to send query to database '$id'"];
+            return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
         }
-        return ["success" => true, "id" => $id];
+        return ["success" => true, "id" => $this->id];
     }
 }
