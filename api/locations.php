@@ -44,14 +44,6 @@ $app->get("/og", function ($request, $response, $args) {
     return $response->withHeader("Content-Type", "application/json")->withJson($result);
 });
 
-$app->get("/{id}", function ($request, $response, $args) {
-    $loc = new Locations();
-    $id = $args['id'];
-    $result = $loc->byID($id);
-    $result["image"] = @$loc->get_image($id)["image"] ?? "";
-    return $response->withHeader("Content-Type", "application/json")->withJson($result);
-});
-
 $app->get("/{id}/image", function ($request, $response, $args) {
     $loc = new Locations();
     $id = $args['id'];
