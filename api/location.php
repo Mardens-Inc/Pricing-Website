@@ -55,11 +55,6 @@ $app->post("/add/filemaker", function ($request, $response, $args) {
     return $response->withJson($result);
 });
 
-$app->get("/ws", function ($request, $response, $args) {
-    // create a websocket
-    $ws = new WebSocket("localhost", 8080);
-});
-
 
 $app->run();
 
