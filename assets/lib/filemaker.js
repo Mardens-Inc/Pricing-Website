@@ -168,6 +168,42 @@ export default class Filemaker {
     }
 
     /**
+     * Performs an advanced search in the Filemaker database.
+     *
+     * @async
+     * @param {Object} fields - The search fields and their values.
+     * @param {Array<string>} sort - The field to sort the results by.
+     * @param {boolean} ascending - Whether to sort the results in ascending order.
+     * @throws {Error} - If required fields are not set or if the search fails.
+     * @returns {Promise<FilemakerRecord[]>} - A promise that resolves to an array of FilemakerRecord objects representing the search results.
+     */
+    async advancedSearch(fields, sort, ascending) {
+        if (this.username === "" && this.password === "" && this.database === "" && this.layout === "") {
+            throw new Error("Required fields are not set. Please set the username, password, database, and layout before making a request.");
+        }
+
+        // Set the accept headers to only accept json responses.
+        const headers = new Headers();
+        headers.set("Accept", "application/json");
+        headers.set("X-Authentication-Options", JSON.stringify({username: this.username, password: this.password}));
+
+
+        try {
+            const body = JSON.stringify({fields, sort, ascending});
+            const response = await fetch(`${this.url}/databases/${this.database}/layouts/${this.layout}/search?query=${encodeURIComponent(query)}`, {headers, method: "POST", body});
+            let json = await response.json();
+            let records = [];
+            for (let record of json) {
+                records.push(FilemakerRecord.fromJSON(record));
+            }
+            return records;
+        } catch (e) {
+            console.error(e);
+            throw new Error("Failed to search for records");
+        }
+    }
+
+    /**
      * Retrieve the list of databases from the server.
      *
      * @throws {Error} Required fields are not set. Please set the username and password before making a request.
@@ -427,7 +463,8 @@ export default class Filemaker {
             let json = await response.json();
             return FilemakerRecord.fromJSON(json);
         } catch (e) {
-            console.error(e);
+            console.error(e, record);
+
             throw new Error("Failed to add record");
         }
     }
