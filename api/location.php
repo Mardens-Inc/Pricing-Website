@@ -15,6 +15,10 @@ $app->get("/", function ($request, $response, $args) {
     $loc = new Locations();
     $id = $args['id'];
     $result = $loc->byID($id);
+    if(isset($result["error"]))
+    {
+        return $response->withStatus(404)->withJson($result);
+    }
     $result["image"] = @$loc->get_image($id)["image"] ?? "";
     $headingsOnly = $request->getQueryParams()["headings"] ?? false;
     $sort = $request->getQueryParams()["sort"] ?? "id";
@@ -26,7 +30,7 @@ $app->get("/", function ($request, $response, $args) {
         $result["results"] = @$loc->list(10, 0, "id", false, "");
     }
 
-    return $response->withHeader("Content-Type", "application/json")->withJson([$result]);
+    return $response->withHeader("Content-Type", "application/json")->withJson($result);
 });
 
 $app->get('/columns', function ($request, $response, $args) {
