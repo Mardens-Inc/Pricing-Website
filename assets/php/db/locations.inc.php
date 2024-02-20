@@ -113,7 +113,7 @@ class Locations
     {
         $id = $this->hashids->decode($id);
         if (empty($id)) {
-            return array(); // If the query failed, return an empty array
+            return ["success" => false, "error" => "Invalid id supplied"]; // If the query failed, return an empty array
         }
         $id = $id[0];
         $sql = "SELECT * FROM locations WHERE id = $id";
@@ -215,7 +215,8 @@ class Locations
         foreach (glob($target_dir . "*.png") as $filename) {
             $filename = str_replace($target_dir, "", $filename);
             $name = str_replace(".png", "", $filename);
-            $images[] = ["name" => $name, "url" => (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $filename, "file" => $filename];
+            $file = $_SERVER["DOCUMENT_ROOT"] . "/assets/images/locations/" . $filename;
+            $images[] = ["name" => $name, "url" => (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $filename . "?v=" . filemtime($file), "file" => $filename];
         }
         return $images;
     }
