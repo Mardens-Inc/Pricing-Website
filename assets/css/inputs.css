@@ -10,7 +10,6 @@ button, .button {
     font-weight: 600;
     transition: background, color;
     transition-duration: 100ms;
-    border: 2px solid transparent;
 }
 
 button.secondary, .button.secondary {
