@@ -404,4 +404,44 @@ class Location
         }
         return ["success" => true, "id" => $this->id];
     }
+    public function export(mixed $format)
+    {
+        $sql = "SELECT * FROM `$this->id`";
+        $result = $this->connection->query($sql);
+        if (!$result) {
+            return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
+        }
+
+        $locations = array();
+        while ($row = $result->fetch_assoc()) {
+            $locations[] = $row;
+        }
+
+        switch ($format) {
+            case "application/json":
+                return json_encode($locations);
+            case "application/csv":
+                $csv = "";
+                $columns = array_keys($locations[0]);
+                $csv .= implode(",", $columns) . "\n";
+                foreach ($locations as $location) {
+                    $csv .= implode(",", $location) . "\n";
+                }
+                return $csv;
+            case "application/xml":
+                $xml = new SimpleXMLElement("<?xml version=\"1.0\"?><locations></locations>");
+                array_walk_recursive($locations, array($xml, 'addChild'));
+                return $xml->asXML();
+            case "application/xlsx":
+                $spreadsheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
+                $sheet = $spreadsheet->getActiveSheet();
+                $sheet->fromArray($locations, null, 'A1');
+                $writer = new PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+                $file = tempnam(sys_get_temp_dir(), "locations");
+                $writer->save($file);
+                return $file;
+            default:
+                return ["success" => false, "error" => "Invalid format"];
+        }
+    }
 }
