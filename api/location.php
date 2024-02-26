@@ -2,8 +2,11 @@
 
 use Slim\Factory\AppFactory;
 
-header('Access-Control-Allow-Origin: *');
-header("Content-Type: application/json");
+
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: *");
+header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
+
 require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/db/location.inc.php";
 require_once $_SERVER["DOCUMENT_ROOT"] . "/vendor/autoload.php";
 
@@ -15,8 +18,7 @@ $app->get("/", function ($request, $response, $args) {
     $loc = new Locations();
     $id = $args['id'];
     $result = $loc->byID($id);
-    if(isset($result["error"]))
-    {
+    if (isset($result["error"])) {
         return $response->withStatus(404)->withJson($result);
     }
     $result["image"] = @$loc->get_image($id)["image"] ?? "";
@@ -27,10 +29,25 @@ $app->get("/", function ($request, $response, $args) {
 
     if (!$headingsOnly) {
         $loc = new Location($id);
-        $result["results"] = @$loc->list(10, 0, "id", false, "");
+        $result["results"] = @$loc->list(10, 0, $sort, $asc, "");
     }
 
     return $response->withHeader("Content-Type", "application/json")->withJson($result);
+});
+
+$app->get("/export", function ($request, $response, $args) {
+    $loc = new Location($args["id"]);
+    // get the format from the accept header
+    $format = $request->getHeader("Accept")[0] ?? "application/csv";
+
+    try {
+        $result = $loc->export($format);
+    } catch (Exception $e) {
+        return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
+    }
+
+    $response->write($result);
+    return $response->withHeader("Content-Type", $format);
 });
 
 $app->get('/columns', function ($request, $response, $args) {
@@ -45,8 +62,7 @@ $app->post("/add/filemaker", function ($request, $response, $args) {
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
     }
 
-    if(!isset($json["username"]) || !isset($json["password"]) || !isset($json["layout"]) || !isset($json["database"]))
-    {
+    if (!isset($json["username"]) || !isset($json["password"]) || !isset($json["layout"]) || !isset($json["database"])) {
         $missing = array_diff(["username", "password", "layout", "database"], array_keys($json));
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Missing required parameters", "missing" => $missing]);
     }
@@ -56,6 +72,18 @@ $app->post("/add/filemaker", function ($request, $response, $args) {
     $layout = $json["layout"];
     $database = $json["database"];
     $result = $loc->importFromFilemaker($username, $password, $database, $layout);
+    return $response->withJson($result);
+});
+
+$app->put("/", function ($request, $response, $args) {
+    $json = json_decode(file_get_contents("php://input"), true);
+    if (!$json || json_last_error_msg() != "No error") {
+        return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
+    }
+    $loc = new Locations();
+//    {"name":"Walmart","location":"NJ","po":"98155","image":"wm","options":{"show-date":"false","voice-search-form":{"enabled":"false","voice-description-column":"","voice-price-column":""},"print-form":{"enabled":"false","print-label":"","print-year":"","print-price-column":"","print-retail-price-column":"","print-show-retail":false}}}
+    $
+    $result = $loc->editRecord();
     return $response->withJson($result);
 });
 
