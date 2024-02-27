@@ -125,6 +125,10 @@ class Locations
         $row["options"] = json_decode($row["options"], true);
         $row["id"] = $this->hashids->encode($row["id"]);
         $row["image"] = strtolower($row["image"]);
+        require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/db/location.inc.php";
+        $loc = new Location($row["id"]);
+        $cols = $loc->getColumns();
+        $row["columns"] = $cols["columns"];
 
         return $row;
     }
