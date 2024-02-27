@@ -75,17 +75,17 @@ $app->post("/add/filemaker", function ($request, $response, $args) {
     return $response->withJson($result);
 });
 
-$app->put("/", function ($request, $response, $args) {
-    $json = json_decode(file_get_contents("php://input"), true);
-    if (!$json || json_last_error_msg() != "No error") {
-        return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
-    }
-    $loc = new Locations();
-//    {"name":"Walmart","location":"NJ","po":"98155","image":"wm","options":{"show-date":"false","voice-search-form":{"enabled":"false","voice-description-column":"","voice-price-column":""},"print-form":{"enabled":"false","print-label":"","print-year":"","print-price-column":"","print-retail-price-column":"","print-show-retail":false}}}
-    $
-    $result = $loc->editRecord();
-    return $response->withJson($result);
-});
+//$app->put("/", function ($request, $response, $args) {
+//    $json = json_decode(file_get_contents("php://input"), true);
+//    if (!$json || json_last_error_msg() != "No error") {
+//        return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
+//    }
+//    $loc = new Locations();
+////    {"name":"Walmart","location":"NJ","po":"98155","image":"wm","options":{"show-date":"false","voice-search-form":{"enabled":"false","voice-description-column":"","voice-price-column":""},"print-form":{"enabled":"false","print-label":"","print-year":"","print-price-column":"","print-retail-price-column":"","print-show-retail":false}}}
+//    $
+//    $result = $loc->editRecord();
+//    return $response->withJson($result);
+//});
 
 
 $app->run();
