@@ -1,11 +1,11 @@
 <?php
 
-use Slim\Factory\AppFactory;
-
-
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Headers: *");
-header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
+header("Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS");
+
+
+use Slim\Factory\AppFactory;
 
 require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/db/location.inc.php";
 require_once $_SERVER["DOCUMENT_ROOT"] . "/vendor/autoload.php";
@@ -75,17 +75,40 @@ $app->post("/add/filemaker", function ($request, $response, $args) {
     return $response->withJson($result);
 });
 
-//$app->put("/", function ($request, $response, $args) {
-//    $json = json_decode(file_get_contents("php://input"), true);
-//    if (!$json || json_last_error_msg() != "No error") {
-//        return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
-//    }
-//    $loc = new Locations();
-////    {"name":"Walmart","location":"NJ","po":"98155","image":"wm","options":{"show-date":"false","voice-search-form":{"enabled":"false","voice-description-column":"","voice-price-column":""},"print-form":{"enabled":"false","print-label":"","print-year":"","print-price-column":"","print-retail-price-column":"","print-show-retail":false}}}
-//    $
-//    $result = $loc->editRecord();
-//    return $response->withJson($result);
-//});
+$app->patch("/", function ($request, $response, $args) {
+    require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/db/locations.inc.php";
+    $json = json_decode(file_get_contents("php://input"), true);
+    if (!$json || json_last_error_msg() != "No error") {
+        return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
+    }
+    $loc = new Locations();
+    $id = $args["id"];
+    $name = $json["name"];
+    $location = $json["location"];
+    $po = $json["po"];
+    $image = $json["image"];
+    $options = json_encode($json["options"]);
+    $result = $loc->editRecord($id, $name, $location, $po, $image, $options);
+    if($result == [])
+    {
+        return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
+    }
+    if(!$result["success"])
+    {
+        return $response->withStatus(400)->withJson($result);
+    }
+    return $response->withJson($result);
+});
+
+$app->patch("/columns", function ($request, $response, $args) {
+    $json = json_decode(file_get_contents("php://input"), true);
+    if (!$json || json_last_error_msg() != "No error") {
+        return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
+    }
+    $loc = new Location($args["id"]);
+    $result = $loc->setColumns($json);
+    return $response->withJson($result);
+});
 
 
 $app->run();
