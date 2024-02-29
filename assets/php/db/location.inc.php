@@ -121,9 +121,10 @@ class Location
      * @param string $sort The column to sort by
      * @param bool $ascending Whether to sort ascending or descending
      * @param string $query The search query to filter by
+     * @param array $searchColumns The columns to search in, leave blank to search in all columns
      * @return array An array of locations
      */
-    public function list(int $max_count = 0, int $page = 0, string $sort = "", bool $ascending = true, string $query = ""): array
+    public function list(int $max_count = 0, int $page = 0, string $sort = "", bool $ascending = true, string $query = "", array $searchColumns = []): array
     {
         // If max_count is 0, return all locations
         $sql = "SELECT * FROM `$this->id`";
@@ -132,7 +133,7 @@ class Location
             if (!$columns["success"]) {
                 return ["success" => false, "error" => "Failed to get columns"];
             }
-            $columns = $columns["columns"];
+            $columns = empty($searchColumns) ? $columns["columns"] : $searchColumns;
             $sql .= " WHERE (";
             foreach ($columns as $column) {
                 $sql .= "$column LIKE '%$query%' OR ";
@@ -148,6 +149,7 @@ class Location
                 $sql .= " DESC";
             }
         }
+
         if (!empty($max_count)) {
             // If max_count is not 0, return the specified number of locations and offset by the specified amount
             $page = $page * $max_count; // Offset is the page number * the max number of locations per page
@@ -257,6 +259,23 @@ class Location
                     return ["success" => false, "error" => "Failed to remove column '$column'"];
                 }
             }
+        }
+        return ["success" => true];
+    }
+
+    /**
+     * Renames a column in a table
+     *
+     * @param string $oldName The name of the column to be renamed
+     * @param string $newName The new name for the column
+     * @return array An array containing the success status and error message if applicable
+     */
+    public function renameColumn(string $oldName, string $newName): array
+    {
+        $sql = "ALTER TABLE `$this->id` CHANGE COLUMN `$oldName` `$newName` TEXT";
+        $result = $this->connection->query($sql);
+        if (!$result) {
+            return ["success" => false, "error" => "Failed to rename column '$oldName' to '$newName'"];
         }
         return ["success" => true];
     }
@@ -404,6 +423,7 @@ class Location
         }
         return ["success" => true, "id" => $this->id];
     }
+
     public function export(mixed $format)
     {
         $sql = "SELECT * FROM `$this->id`";
