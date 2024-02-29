@@ -89,17 +89,23 @@ $app->patch("/", function ($request, $response, $args) {
     $image = $json["image"];
     $options = json_encode($json["options"]);
     $result = $loc->editRecord($id, $name, $location, $po, $image, $options);
-    if($result == [])
-    {
+    if ($result == []) {
         return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
     }
-    if(!$result["success"])
-    {
+    if (!$result["success"]) {
         return $response->withStatus(400)->withJson($result);
     }
     return $response->withJson($result);
 });
-
+$app->patch("/columns/{column}", function ($request, $response, $args) {
+    $json = json_decode(file_get_contents("php://input"), true);
+    if (!$json || json_last_error_msg() != "No error") {
+        return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
+    }
+    $loc = new Location($args["id"]);
+    $result = $loc->renameColumn($args["column"], $json["name"]);
+    return $response->withJson($result);
+});
 $app->patch("/columns", function ($request, $response, $args) {
     $json = json_decode(file_get_contents("php://input"), true);
     if (!$json || json_last_error_msg() != "No error") {
@@ -107,6 +113,23 @@ $app->patch("/columns", function ($request, $response, $args) {
     }
     $loc = new Location($args["id"]);
     $result = $loc->setColumns($json);
+    return $response->withJson($result);
+});
+
+
+$app->post("/search", function ($request, $response, $args) {
+    $json = json_decode(file_get_contents("php://input"), true);
+    if (!$json || json_last_error_msg() != "No error") {
+        return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
+    }
+    $loc = new Location($args["id"]);
+    $query = $json["query"];
+    $columns = $json["columns"] ?? [];
+    $sort = $json["sort"] ?? "id";
+    $asc = $json["asc"] ?? false;
+    $limit = $json["limit"] ?? 10;
+    $page = $json["page"] ?? 0;
+    $result = $loc->list($limit, $page, $sort, $asc, $query, $columns);
     return $response->withJson($result);
 });
 
