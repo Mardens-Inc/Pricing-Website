@@ -1,0 +1,1 @@
+const layouts = ["static-list", "simple-inventory-list", "advanced-inventory-list"]
