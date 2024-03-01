@@ -1,0 +1,50 @@
+<link rel="stylesheet" href="assets/css/import-filemaker.css">
+<h1>Import from Filemaker</h1>
+<div id="import-form" class="col">
+    <form class="col" id="filemaker-databases" action="javascript:void(0);">
+        <h3>Filemaker Databases</h3>
+        <div class="list col">
+
+        </div>
+
+        <div class="row section-navigation">
+            <button class="primary" type="submit" disabled>Next</button>
+        </div>
+    </form>
+    <form class="col" id="databases-images" action="javascript:void(0);" style="display: none">
+        <h3>Database Icons</h3>
+        <div class="list col">
+
+        </div>
+
+        <div class="row section-navigation">
+<!--            <button class="secondary" type="button">Back</button>-->
+            <button class="primary" type="submit" disabled>Next</button>
+        </div>
+    </form>
+    <form id="filemaker-credentials" class="col" style="display: none" action="javascript:void(0);">
+        <div class="floating-input">
+            <input type="text" id="filemaker-username" placeholder="Filemaker Username" required>
+            <label for="filemaker-username">Filemaker Username</label>
+        </div>
+        <div class="floating-input">
+            <input type="password" id="filemaker-password" placeholder="Filemaker Password" required>
+            <label for="filemaker-password">Filemaker Password</label>
+        </div>
+
+        <div class="row section-navigation">
+            <button class="primary" type="submit">Next</button>
+        </div>
+    </form>
+    <form class="col" id="filemaker-tables" style="display: none" action="javascript:void(0);">
+        <h3>Filemaker Tables</h3>
+        <div class="list col">
+
+        </div>
+
+        <div class="row section-navigation">
+            <button class="primary" type="submit" disabled>Import</button>
+        </div>
+    </form>
+
+</div>
