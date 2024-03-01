@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pricing App</title>
+
+    <link rel="shortcut icon" href="assets/images/icon.png" type="image/x-icon">
+
+    <link rel="stylesheet" href="assets/css/main.css">
+    <link rel="stylesheet" href="assets/css/inputs.css">
+    <link rel="stylesheet" href="assets/css/nav.css">
+    <link rel="stylesheet" href="assets/css/list.css">
+    <link rel="stylesheet" href="assets/css/scrollbar.css">
+
+    <link rel="stylesheet" href="assets/css/fonts.min.css">
+
+    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <script src="assets/js/jquery-3.7.1.min.js"></script>
+</head>
+<body class="col">
+<nav class="row center vertical">
+    <div id="hero" class="row">
+        <img src="assets/images/icon.svg" alt="">
+        <div class="title col">
+            <h1></h1>
+            <h3 style="display: none;"></h3>
+            <button style="display: none;">Back</button>
+        </div>
+    </div>
+    <div id="search-area" class="row">
+        <div class="floating-input">
+            <input type="search" id="search" placeholder="Search for a product">
+            <label for="search">search</label>
+        </div>
+        <button id="voice-search-button" title="Voice Search"><img src="assets/images/icons/microphone.svg" alt=""></button>
+        <button title="Show filters" style="display: none"><img src="assets/images/icons/filters.svg" alt=""></button>
+    </div>
+    <div id="actions-area" class="row">
+        <button id="new-button" title="Add new product" class="primary"><img src="assets/images/icons/add.svg" alt=""></button>
+        <button id="edit-button" title="Open database settings"><img src="assets/images/icons/edit.svg" alt=""></button>
+        <button id="login-button" title="Login"><img src="assets/images/icons/login.svg" alt=""></button>
+        <button id="settings-button" title="Open Settings"><i class="fa fa-gear"></i></button>
+    </div>
+</nav>
+
+<main>
+    <div class="list col">
+
+    </div>
+
+    <div class="pagination center horizontal">
+    </div>
+</main>
+
+<script>
+    const baseURL = window.location.protocol === "https:" ? "https://pricing-new.mardens.com" : "http://pricing.local";
+</script>
+<script src="assets/js/element-label.js"></script>
+<script src="assets/js/element-dropdown.js"></script>
+<script src="assets/js/pagination.js"></script>
+<script src="assets/js/page-navigation.js" type="module"></script>
+<script src="assets/js/voice-search.js" type="module"></script>
+<script src="assets/js/inputs.js"></script>
+
+
+<script>
+    const img = $("#hero img");
+    const title = $("#hero .title h1");
+    const subtitle = $("#hero .title h3");
+    const backButton = $("#hero button");
+</script>
+
+
+</body>
+</html>
