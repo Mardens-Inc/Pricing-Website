@@ -1,0 +1,48 @@
+<link rel="stylesheet" href="assets/css/database-options-form.css">
+<h1>Database Settings</h1>
+<div id="options-form" class="col" action="javascript:void(0);">
+    <div class="list grid fill" id="icons"></div>
+    <div class="floating-input fill">
+        <input type="text" id="database-name" name="name" placeholder="">
+        <label for="database-name">Name</label>
+    </div>
+    <div class="row fill" style="gap: 1rem;">
+        <div class="floating-input fill">
+            <input type="text" id="database-location" name="loc" placeholder="">
+            <label for="database-location">Location</label>
+        </div>
+        <div class="floating-input fill">
+            <input type="text" id="database-po" name="po" placeholder="">
+            <label for="database-po">PO#</label>
+        </div>
+    </div>
+    <h2>Columns</h2>
+    <p>Drag columns around to order them or click the <i class="fa-solid fa-ellipsis-vertical"></i> for more information.</p>
+    <div class="row fill" id="column-list">
+    </div>
+
+    <h2>Extra Options</h2>
+    <toggle id="allow-inventorying" name="inventory" value="false" title="This will show the primary and quantity fields to allow inventorying">Allow Inventorying?</toggle>
+    <toggle id="allow-additions" name="additions" value="false" title="This will show the additions field to allow adding to the database" toggle-hidden="allow-inventorying">Allow Additions?</toggle>
+    <toggle id="print" name="print" value="false">Can print label?</toggle>
+    <div class="print-form fill extra-section col" toggle-hidden="print">
+        <div class="row fill">
+            <div class="col fill" style="margin-right: 5px">
+                <label for="print-label">Print Label</label>
+                <input type="text" id="print-label" name="print-label" placeholder="Print Label" tabindex="4">
+            </div>
+            <div class="col fill" style="margin-left: 5px">
+                <label for="print-year">Print Year</label>
+                <input type="text" name="print-year" id="print-year" placeholder="Print Year" tabindex="5">
+            </div>
+        </div>
+        <toggle name="print-show-retail" value="true">Show Retail Price?</toggle>
+    </div>
+    <toggle id="voice-search" name="voice-search" value="false">Enable voice searching?</toggle>
+
+    <div id="action-button-row" class="row fill center horizontal">
+        <button id="save" class="primary" type="submit">Save</button>
+        <button id="cancel" type="button">Cancel</button>
+    </div>
+
+</div>
