@@ -1,0 +1,40 @@
+.loading {
+    --size: 100px;
+    --speed: 1s;
+    --color: white;
+    --font: 2rem;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-size: var(--font);
+
+    &.fullscreen {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.95);
+        z-index: 999999999;
+    }
+
+    &::after {
+        content: '';
+        display: block;
+        width: var(--size);
+        height: var(--size);
+        border-radius: 50%;
+        border: 5px solid transparent;
+        border-top-color: var(--color);
+        animation: -spin var(--speed) linear infinite;
+        margin-top: 1rem;
+    }
+}
+
+@keyframes -spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

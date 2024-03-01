@@ -1,0 +1,12 @@
+#inventorying-form{
+    margin: 1rem 1rem 1rem 2rem;
+    #addition-section{
+        margin-bottom: 1rem;
+    }
+
+    button[type=submit]
+    {
+        width: 200px;
+        margin-inline: auto;
+    }
+}

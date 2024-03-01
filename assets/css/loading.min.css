@@ -1,0 +1,1 @@
+@keyframes -spin{0%{transform:rotate(0deg)}to{transform:rotate(360deg)}}.loading{--size:100px;--speed:1s;--color:white;--font:2rem;display:flex;justify-content:center;align-items:center;flex-direction:column;font-size:var(--font)}

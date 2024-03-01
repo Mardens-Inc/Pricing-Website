@@ -1,0 +1,34 @@
+#import-form {
+    width: 85%;
+    margin: auto;
+
+    .floating-input {
+        max-width: calc(100% - 2rem);
+    }
+
+    button {
+        width: 300px;
+        margin: auto;
+    }
+
+    .list {
+        max-height: calc(100vh - 465px);
+        overflow: scroll;
+        margin: 0;
+        width: 100%;
+    }
+
+
+    input[type="radio"] {
+        visibility: hidden;
+        position: absolute;
+
+        &:checked + label {
+            background: var(--primary);
+            color: var(--background);
+            font-weight: 700;
+        }
+    }
+
+}
+

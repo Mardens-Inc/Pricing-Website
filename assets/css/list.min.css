@@ -1,0 +1,1 @@
+.list{display:flex;justify-content:space-between;margin:1rem auto;width:90%;min-width:500px;max-height:calc(100vh - 276px);min-height:100px;overflow-y:auto}

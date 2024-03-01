@@ -1,30 +1,25 @@
 :root {
-    --scrollbar-width: 10px;
-    scroll-behavior: smooth;
-    scrollbar-width: var(--scrollbar-width);
-    scrollbar-color: #191919 transparent;
+    --scrollbarBG: #C5C5C5;
+    --thumbBG: #6A6A6A;
+    --scrollbar-width: 5px;
+    scrollbar-gutter: stable;
 }
-
-body {
-    overflow: overlay;
-}
-
 
 ::-webkit-scrollbar {
     width: var(--scrollbar-width);
-}
-
-::-webkit-scrollbar-thumb {
-    width: var(--scrollbar-width);
-    /* background: black; */
-    background: #191919;
-    border-radius: 100px;
+    height: var(--scrollbar-width);
 }
 
 ::-webkit-scrollbar-track {
-    background-color: transparent;
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: var(--thumbBG);
+    border-radius: 20px;
+    border: 3px solid var(--scrollbarBG);
 }
 
 ::-webkit-scrollbar-corner {
-    background-color: transparent;
+    background: transparent;
 }
