@@ -139,37 +139,43 @@ class Locations
      * @param string $location The location name/address of the location, eg "123 Main St, City, State"
      * @param string $po The PO of the location
      * @param string $image The icon/logo of the location
-     * @param array $rows
+     * @param array $columns
      * @return array An array containing the ID of the newly inserted location and whether the operation was successful
      */
-    public function add(string $name, string $location, string $po, string $image, array $rows): array
+    public function add(string $name, string $location, string $po, string $image, array $columns, array $options = null): array
     {
-        // Prepared Insert query, with proper sanitization.
-        $stmt = $this->connection->prepare("INSERT INTO locations (name, location, po, image) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("ssss", $name, $location, $po, $image);
+        try {
+            // Prepared Insert query, with proper sanitization.
+            $options = $options == null ? "{}" : json_encode($options);
+            $stmt = $this->connection->prepare("INSERT INTO locations (name, location, po, image, options) VALUES (?, ?, ?, ?, ?)");
+            $stmt->bind_param("sssss", $name, $location, $po, $image, $options);
 
-        if (!$stmt->execute()) {
-            return ["success" => false, "error" => "Failed to insert into table!"]; // If the query failed
+            if (!$stmt->execute()) {
+                return ["success" => false, "error" => "Failed to insert into table!"]; // If the query failed
+            }
+
+            $id = $this->connection->insert_id; // Get the ID of the newly inserted location
+            $id = $this->hashids->encode($id); // Encode the ID
+
+            $tableItems = "";
+
+            foreach ($columns as $column) {
+                if ($column == "id" || $column == "date") continue;
+                $tableItems .= ", `$column` varchar(1024) DEFAULT NULL";
+            }
+
+            $sql = "CREATE TABLE `$id` (`id` int(11) NOT NULL AUTO_INCREMENT$tableItems,`date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+            // die($sql);
+            $result = $this->connection->query($sql);
+
+            if (!$result) {
+                return ["success" => false, "error" => "Failed to create table!"]; // If the query failed
+            }
+
+            return ["id" => $id, "success" => true];
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage()];
         }
-
-        $id = $this->connection->insert_id; // Get the ID of the newly inserted location
-        $id = $this->hashids->encode($id); // Encode the ID
-
-        $tableItems = "";
-
-        foreach ($rows as $row) {
-            $tableItems .= ", `$row` varchar(255) DEFAULT NULL";
-        }
-
-        $sql = "CREATE TABLE `$id` (`id` int(11) NOT NULL AUTO_INCREMENT$tableItems,`date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-        // die($sql);
-        $result = $this->connection->query($sql);
-
-        if (!$result) {
-            return ["success" => false, "error" => "Failed to create table!"]; // If the query failed
-        }
-
-        return ["id" => $id, "success" => true];
     }
 
     /**
@@ -179,25 +185,34 @@ class Locations
      */
     public function delete(string $id): array
     {
-        $sql = "DROP TABLE `$id`";
-        $result = $this->connection->query($sql);
-        if (!$result) {
-            return ["success" => false, "error" => "Unable to drop table: $id"];
+        // remove the table from the database
+        try {
+            $sql = "DROP TABLE `$id`";
+            $result = $this->connection->query($sql);
+            if (!$result) {
+                return ["success" => false, "error" => "Unable to drop table: $id"];
+            }
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage()];
         }
 
-        $id = $this->hashids->decode($id); // Decode the ID
-        if (empty($id)) {
-            return ["success" => false, "error" => "Invalid ID"];
-        }
+        // remove the location from the locations table
+        try {
 
-
-        $id = $id[0];
-        $sql = "DELETE FROM locations WHERE id = $id LIMIT 1";
-        $result = $this->connection->query($sql);
-        if (!$result) {
-            return ["success" => false];
+            $id = $this->hashids->decode($id); // Decode the ID
+            if (empty($id)) {
+                return ["success" => false, "error" => "Invalid ID"];
+            }
+            $id = $id[0];
+            $sql = "DELETE FROM locations WHERE id = $id LIMIT 1";
+            $result = $this->connection->query($sql);
+            if (!$result) {
+                return ["success" => false];
+            }
+            return ["success" => true];
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage()];
         }
-        return ["success" => true];
     }
 
     /**
