@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="assets/css/nav.css">
     <link rel="stylesheet" href="assets/css/list.css">
     <link rel="stylesheet" href="assets/css/scrollbar.css">
+    <link rel="stylesheet" href="assets/css/popups.css">
 
     <link rel="stylesheet" href="assets/css/fonts.min.css">
 
@@ -29,17 +30,18 @@
     </div>
     <div id="search-area" class="row">
         <div class="floating-input">
-            <input type="search" id="search" placeholder="Search for a product">
+            <input type="search" id="search" placeholder="Search for a product" autocomplete="off">
             <label for="search">search</label>
         </div>
         <button id="voice-search-button" title="Voice Search"><img src="assets/images/icons/microphone.svg" alt=""></button>
         <button title="Show filters" style="display: none"><img src="assets/images/icons/filters.svg" alt=""></button>
     </div>
     <div id="actions-area" class="row">
-        <button id="new-button" title="Add new product" class="primary"><img src="assets/images/icons/add.svg" alt=""></button>
-        <button id="edit-button" title="Open database settings"><img src="assets/images/icons/edit.svg" alt=""></button>
-        <button id="login-button" title="Login"><img src="assets/images/icons/login.svg" alt=""></button>
-        <button id="settings-button" title="Open Settings"><i class="fa fa-gear"></i></button>
+        <button id="new-button" title="Add new product" class="primary" authorized-access><img src="assets/images/icons/add.svg" alt=""></button>
+        <button id="edit-button" title="Open database settings" class="primary" authorized-access><img src="assets/images/icons/edit.svg" alt=""></button>
+        <button id="export-button" title="Export database as CSV"><i class="fa fa-cloud-download"></i></button>
+        <!--        <button id="settings-button" title="Open Settings"><i class="fa fa-gear"></i></button>-->
+        <button id="login-button"><img src="" alt=""></button>
     </div>
 </nav>
 
@@ -60,6 +62,7 @@
 <script src="assets/js/pagination.js"></script>
 <script src="assets/js/page-navigation.js" type="module"></script>
 <script src="assets/js/voice-search.js" type="module"></script>
+<script src="assets/js/authentication.js" type="module"></script>
 <script src="assets/js/inputs.js"></script>
 
 
