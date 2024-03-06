@@ -27,59 +27,38 @@ class Location
      */
     public function add(array $json): array
     {
-        $keys = array_keys($json);
-        $values = $json[$keys[0]]; // Assuming all arrays have the same length
+        $success = 0;
+        $failure = 0;
+        try {
+            $sql = "";
 
-        $sqls = [];
-        $failed = 0;
-        $inserted = 0;
-
-        for ($i = 0; $i < count($values); $i++) {
-            try {
-                $insert_values = array();
-
-                // Check if all values for the current iteration are blank
-                $allBlank = true;
-                foreach ($keys as $key) {
-                    // Use isset to check if the key exists before accessing it
-                    $value = $json[$key][$i] ?? null;
+            foreach ($json as $item) {
+                $sql = "INSERT INTO `$this->id` (";
+                foreach ($item as $key => $value) {
+                    $sql .= "`$key`, ";
+                }
+                $sql = rtrim($sql, ", ");
+                $sql .= ") VALUES (";
+                foreach ($item as $key => $value) {
                     $value = trim($value);
                     $value = mysqli_real_escape_string($this->connection, $value);
-
-                    $insert_values[] = "'" . $value . "'";
-                    if (!empty($value)) {
-                        $allBlank = false;
-                    }
+                    $sql .= "'$value', ";
                 }
-
-                // Skip iteration if all values are blank
-                if ($allBlank) {
-                    continue;
+                $sql = rtrim($sql, ", ");
+                $sql .= ");";
+                try {
+                    $result = $this->connection->query($sql);
+                    $success++;
+                } catch (Exception $e) {
+                    $failure++;
+                    return ["error" => $e->getMessage(), "success" => $success, "failure" => $failure, "sql" => $sql];
                 }
-
-                $sql = "INSERT INTO `$this->id`(`" . implode('`, `', $keys) . "`) VALUES (" . implode(',', $insert_values) . ")";
-                $sqls[] = $sql;
-            } catch (Exception $e) {
-                $failed++;
             }
+
+        } catch (Exception $e) {
+            return ["error" => $e->getMessage(), "success" => $success, "failure" => $failure];
         }
-
-        foreach ($sqls as $sql) {
-            try {
-
-                $result = $this->connection->query($sql);
-                if ($result) {
-                    $inserted++;
-                } else {
-                    $failed++;
-                }
-            } catch (Exception $e) {
-                echo $sql . "\n";
-                $failed++;
-            }
-        }
-
-        return ["inserted" => $inserted, "failed" => $failed];
+        return ["id" => $this->hashids->encode($this->connection->insert_id), "success" => $success, "failure" => $failure];
     }
 
 
@@ -129,11 +108,7 @@ class Location
         // If max_count is 0, return all locations
         $sql = "SELECT * FROM `$this->id`";
         if (!empty($query)) {
-            $columns = $this->getColumns($this->id);
-            if (!$columns["success"]) {
-                return ["success" => false, "error" => "Failed to get columns"];
-            }
-            $columns = empty($searchColumns) ? $columns["columns"] : $searchColumns;
+            $columns = empty($searchColumns) ? $this->getColumns()["columns"] : $searchColumns;
             $sql .= " WHERE (";
             foreach ($columns as $column) {
                 $sql .= "$column LIKE '%$query%' OR ";
@@ -172,11 +147,7 @@ class Location
 
         $sql = "SELECT COUNT(*) FROM `$this->id`";
         if (!empty($query)) {
-            $columns = $this->getColumns($this->id);
-            if (!$columns["success"]) {
-                return ["success" => false, "error" => "Failed to get columns"];
-            }
-            $columns = $columns["columns"];
+            $columns = empty($searchColumns) ? $this->getColumns()["columns"] : $searchColumns;
             $sql .= " WHERE (";
             foreach ($columns as $column) {
                 $sql .= "$column LIKE '%$query%' OR ";
@@ -184,7 +155,11 @@ class Location
             $sql = rtrim($sql, "OR ");
             $sql .= ")";
         }
-        $result = $this->connection->query($sql);
+        try {
+            $result = $this->connection->query($sql);
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage(), "sql" => $sql];
+        }
         if ($result) {
             $count = $result->fetch_assoc()["COUNT(*)"];
         }
@@ -338,14 +313,13 @@ class Location
         require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/config.inc.php";
         global $DB_USER, $DB_PASSWORD, $DB_NAME;
 
-
-        $command = $_SERVER["DOCUMENT_ROOT"] . "/exec/BulkImportSQL";
+        $isWindows = strtoupper(substr(PHP_OS, 0, 3)) === 'WIN';
+        $command = "{$_SERVER["DOCUMENT_ROOT"]}/exec/" . ($isWindows ? "win" : "linux") . "/BulkImportSQL" . ($isWindows ? ".exe" : "");
         $args = "-i \"$file\" -s localhost -d \"$DB_NAME\" -t \"$this->id\" -u \"$DB_USER\" -p \"$DB_PASSWORD\" -e fieldData -n -c \"$columns\"";
 
         // Determine the right command for the system's OS
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             // Windows
-            $command .= ".exe";
             $command = "start /B $command $args > $log";
         } else {
             // Unix/Linux
@@ -440,15 +414,23 @@ class Location
         switch ($format) {
             case "application/json":
                 return json_encode($locations);
-            case "application/csv":
+            case "text/csv":
                 $csv = "";
                 $columns = array_keys($locations[0]);
                 $csv .= implode(",", $columns) . "\n";
+                $csv .= "\"";
                 foreach ($locations as $location) {
-                    $csv .= implode(",", $location) . "\n";
+                    // replace any quotes or commas in the values with a space
+                    $location = array_map(function ($value) {
+                        return str_replace(["\"", ","], " ", $value);
+                    }, $location);
+
+                    // wrap each value in quotes and separate with commas
+                    $csv .= implode("\",\"", $location) . "\"\n\"";
                 }
+                $csv = rtrim($csv, "\"\n");
                 return $csv;
-            case "application/xml":
+            case "text/xml":
                 $xml = new SimpleXMLElement("<?xml version=\"1.0\"?><locations></locations>");
                 array_walk_recursive($locations, array($xml, 'addChild'));
                 return $xml->asXML();
@@ -463,5 +445,41 @@ class Location
             default:
                 return ["success" => false, "error" => "Invalid format"];
         }
+    }
+
+    /**
+     * Import CSV data into the database
+     *
+     * @param string $body The contents of the CSV file
+     *
+     * @return array An associative array with the following keys:
+     *               - "success" (bool): Whether the import was successful
+     *               - "error" (string): Error message if the import failed
+     */
+    public function importCSV(string $body): array
+    {
+        $csv = str_getcsv($body, "\n");
+        $columns = str_getcsv($csv[0]);
+        $cols = "";
+        foreach ($columns as $column) {
+            $cols .= "`$column`, ";
+        }
+        $cols = rtrim($cols, ", ");
+        $stmt = $this->connection->prepare("INSERT INTO `$this->id` ($cols) VALUES (" . str_repeat('?,', count($columns) - 1) . "?)");
+        for ($i = 1; $i < count($csv); $i++) {
+            try {
+                $row = str_getcsv($csv[$i]);
+                $stmt->bind_param(str_repeat('s', count($row)), ...$row);
+                $result = $stmt->execute();
+                if (!$result) {
+                    return ["success" => false, "error" => "Failed to send query to database '$this->id'", "sql" => $stmt->error];
+                }
+            } catch (Exception $e) {
+                return ["success" => false, "error" => $e->getMessage()];
+            }
+
+        }
+        $stmt->close();
+        return ["success" => true, "inserted" => count($csv) - 1];
     }
 }
