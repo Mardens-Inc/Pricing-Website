@@ -19,19 +19,52 @@
             font-weight: 400;
             width: 100%;
             flex-grow: 1;
+
+            &.extra{
+                --width: 45px;
+                min-width: var(--width);
+                width: var(--width);
+                max-width: var(--width);
+            }
         }
     }
-    tbody{
+
+    tbody {
         display: flex;
         flex-direction: column;
         width: 100%;
-        td{
+
+        td {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
             flex-grow: 1;
             margin-left: 1rem;
+
+            &.description {
+                align-items: start;
+                overflow: scroll;
+                margin-block: auto;
+                max-height: 50px;
+                padding-right: 10px;
+            }
+
+            &.extra {
+                justify-content: end;
+                width: auto;
+            }
+
+            &.price {
+                color: red;
+                font-style: italic;
+            }
+
+            &.mp {
+                color: var(--primary);
+                font-weight: 700;
+                font-style: italic;
+            }
         }
     }
 
@@ -84,9 +117,10 @@
             cursor: pointer;
         }
 
-        &.selected{
+        &.selected {
             background-color: #6a7b68;
-            &:hover{
+
+            &:hover {
                 background-color: #778d75;
             }
         }
