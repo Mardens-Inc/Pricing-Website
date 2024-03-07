@@ -292,7 +292,7 @@ class Locations
      */
     public function from_og(bool $insert = false): array
     {
-        $json = file_get_contents("https://fm.mardens.com/fmDataFiles/db_list.txt");
+        $json = file_get_contents("https://pricing.mardens.com/data/db_list.json");
         try {
             $json = json_decode($json, true);
         } catch (Exception $e) {
