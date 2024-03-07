@@ -18,20 +18,20 @@
         </div>
 
         <div class="row section-navigation">
-<!--            <button class="secondary" type="button">Back</button>-->
+            <!--            <button class="secondary" type="button">Back</button>-->
             <button class="primary" type="submit" disabled>Next</button>
         </div>
     </form>
     <form id="filemaker-credentials" class="col" style="display: none" action="javascript:void(0);">
         <div class="floating-input">
-            <input type="text" id="filemaker-username" placeholder="Filemaker Username" required>
+            <input type="text" id="filemaker-username" placeholder="Filemaker Username" required autocomplete="off">
             <label for="filemaker-username">Filemaker Username</label>
         </div>
         <div class="floating-input">
-            <input type="password" id="filemaker-password" placeholder="Filemaker Password" required>
+            <input type="password" id="filemaker-password" placeholder="Filemaker Password" required autocomplete="off">
             <label for="filemaker-password">Filemaker Password</label>
         </div>
-
+        <p class="error" style="text-align: center"></p>
         <div class="row section-navigation">
             <button class="primary" type="submit">Next</button>
         </div>
