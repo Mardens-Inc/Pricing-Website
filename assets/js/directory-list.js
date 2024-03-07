@@ -1,4 +1,6 @@
 import {startLoading, stopLoading} from "./loading.js";
+import auth from "./authentication.js";
+import {alert} from "./popups.js";
 
 /**
  * Represents a directory list.
@@ -142,7 +144,6 @@ export default class DirectoryList {
     buildListHTML(items) {
         // Start with a clean list
         this.list.html("");
-
         items.forEach((item) => {
             // Create elements for each part of a list item
             const list = $(`<div class="list-item"></div>`);
@@ -158,7 +159,7 @@ export default class DirectoryList {
             const editButton = $(`<button class="edit-list-button" title="Edit product"><img src="assets/images/icons/edit.svg" alt=""></button>`);
             const moreButton = $(`<button class="more-options" data-title="More Options" tabindex="0"><img src="assets/images/icons/more.svg" alt=""></button>`);
 
-            editButton.on('click', ()=>{
+            editButton.on('click', () => {
                 $(this).trigger("loadEdit", [item["id"]]);
             })
 
@@ -169,7 +170,18 @@ export default class DirectoryList {
                         $(this).trigger("loadEdit", [item["id"]]);
                     },
                     "Delete": () => {
-                        console.log("Delete")
+                        alert("Are you sure you want to delete this database?<br>This can not be undone!", null, async () => {
+                            const url = `${baseURL}/api/locations/${item["id"]}`;
+                            try {
+                                startLoading({fullscreen: true})
+                                await $.ajax({url: url, method: "DELETE"});
+                                await this.loadView("", true);
+                            } catch (e) {
+                                console.error("Unable to delete item\n", url, e);
+                                alert("Unable to delete item");
+                            }
+                            stopLoading();
+                        });
                     }
                 })
             });
@@ -182,8 +194,10 @@ export default class DirectoryList {
             title.append(extra);
             clickableArea.append(title);
             list.append(clickableArea);
-            list.append(editButton);
-            list.append(moreButton);
+            if (auth.isLoggedIn) {
+                list.append(editButton);
+                list.append(moreButton);
+            }
 
             // Attach the fully constructed list item to the list itself
             this.list.append(list);

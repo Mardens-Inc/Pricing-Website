@@ -1,37 +1,31 @@
 $(document).on("load", () => {
+    console.log("inputs.js loaded");
     $(`[toggle-hidden]`).each((_, element) => {
         let target = $(element);
         let toggle = $(`#${target.attr("toggle-hidden")}`);
         if (toggle.attr("value") === "true") {
             target.show();
-        }else{
+        } else {
             target.hide();
         }
     });
-    // check if the toggle element has event listener for click
-    if ($("toggle").data("events") === undefined) {
-        // if not, add a click event listener to all elements with the class "toggle".
+    $("toggle").off("click"); // Remove any existing click event listeners.
+    // Add a click event listener to all elements with the class "toggle".
+    $("toggle").on("click", (e) => {
         // Prevent the default click behavior.
+        e.preventDefault();
         // Get the target of the click event.
+        let target = $(e.target);
         // Get the current value of the "value" attribute of the target.
+        let value = target.attr("value") === "true";
         // Set the "value" attribute of the target to the opposite of its current value.
+        target.attr("value", !value);
         // Trigger a "toggle" event on the target with the new value.
-        $("toggle").on("click", (e) => {
-            // Prevent the default click behavior.
-            e.preventDefault();
-            // Get the target of the click event.
-            let target = $(e.target);
-            // Get the current value of the "value" attribute of the target.
-            let value = target.attr("value") === "true";
-            // Set the "value" attribute of the target to the opposite of its current value.
-            target.attr("value", !value);
-            // Trigger a "toggle" event on the target with the new value.
-            target.trigger("toggle", [{value: !value}]);
+        target.trigger("toggle", [{value: !value}]);
 
-            // Toggles the visibility of the target element and the element with the id specified in the "toggle-hidden" attribute of the target.
-            $(`[toggle-hidden="${target.attr("id")}"]`).toggle();
-        });
-    }
+        // Toggles the visibility of the target element and the element with the id specified in the "toggle-hidden" attribute of the target.
+        $(`[toggle-hidden="${target.attr("id")}"]`).toggle();
+    });
 
 
     /**

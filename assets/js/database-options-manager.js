@@ -37,7 +37,8 @@
  */
 
 
-import {startLoading, stopLoading} from "./loading.js";
+import {startLoading, stopLoading, updateLoadingOptions} from "./loading.js";
+import {alert} from "./popups.js";
 
 /**+
  * @type {ListHeading}
@@ -56,7 +57,7 @@ let renamedColumns = [];
 /**
  * Builds the options form for a given id.
  *
- * @param {string} id - The id to retrieve the options for.
+ * @param {string|null} id - The id to retrieve the options for, or null if creating a new database.
  * @param {function} onclose - The function to call when the form is closed.
  * @return {Promise<JQuery>} - A Promise that resolves to the HTML form representing the options.
  */
@@ -64,7 +65,6 @@ async function buildOptionsForm(id, onclose) {
     startLoading({fullscreen: true})
     const html = $(await $.ajax({url: "assets/html/database-options-form.html", method: "GET"}));
     currentOptions = await getCurrentOptions(id);
-    console.log(currentOptions)
     originalOptions = {...currentOptions};
     originalColumns = currentOptions.columns;
     await buildIconList(html);
@@ -75,15 +75,18 @@ async function buildOptionsForm(id, onclose) {
         onclose();
     });
     html.find("#cancel").on("click", onclose);
+    if (id === null)
+        await initCreation(html);
     stopLoading();
     return html;
 }
 
 /**
- * @param {string} id
+ * @param {string|null} id
  * @returns {Promise<Object>}
  */
 async function getCurrentOptions(id) {
+    if (id === null) return {};
     return $.get(`${baseURL}/api/location/${id}/?headings=true`);
 }
 
@@ -124,12 +127,14 @@ async function buildIconList(html) {
  * @param {JQuery} html
  */
 function setDefaultOptionValues(html) {
-    html.find("input#database-name").val(currentOptions.name);
-    html.find("input#database-location").val(currentOptions.location);
-    html.find("input#database-po").val(currentOptions.po);
-    html.find("toggle#show-date").attr("value", currentOptions.options["show-date"]);
-    html.find("toggle#voice-search").attr("value", currentOptions.options["voice-search"]);
-    html.find("toggle#print").attr("value", currentOptions.options["print"]);
+    if (currentOptions === undefined) return;
+    html.find("input#database-name").val(currentOptions.name ?? "");
+    html.find("input#database-location").val(currentOptions.location ?? "");
+    html.find("input#database-po").val(currentOptions.po ?? "");
+
+    if (currentOptions.options === undefined) return;
+    html.find("toggle#voice-search").attr("value", currentOptions.options["voice-search"] ?? false);
+    html.find("toggle#print").attr("value", currentOptions.options["print"] ?? false);
     html.find("toggle#allow-inventorying").attr("value", currentOptions.options["allow-inventorying"] ?? false);
     html.find("toggle#allow-additions").attr("value", currentOptions.options["allow-additions"] ?? false);
 }
@@ -137,9 +142,10 @@ function setDefaultOptionValues(html) {
 function createColumnList(html) {
     const list = html.find("#column-list");
     list.empty();
+    if (currentOptions.columns === undefined) return;
     if (currentOptions.options.columns === undefined || currentOptions.options.columns.length === 0) {
         currentOptions.options.columns = currentOptions.columns.filter(i => i !== "id").map(c => {
-            if (c === "date") return ({name: c, visible: false});
+            if (c === "date") return ({name: c, visible: false, attributes: ["readonly"]});
             return ({name: c.toString(), visible: true})
         });
     }
@@ -187,7 +193,7 @@ function createColumnList(html) {
                         $(`i.attribute.active.${attribute.name}`).removeClass("active");
                         // remove the attribute from all other columns
                         for (const c of currentOptions.options.columns) {
-                            if(c.name === column.name) continue;
+                            if (c.name === column.name) continue;
                             if (c.attributes !== undefined && c.attributes.includes(attribute.name))
                                 console.log(`removing ${attribute.name} from ${c.name}`)
                             c.attributes = c.attributes.filter(a => a !== attribute.name);
@@ -209,7 +215,6 @@ function createColumnList(html) {
         let isDragging = false;
         listItem.on("mousedown", (e) => {
             if (e.target.classList.contains("fa-ellipsis-vertical") || e.target.tagName === "I") return;
-            console.log(e.target)
             const item = $(e.currentTarget);
             if (item.hasClass("hidden") || item.find(".name")[0].tagName === "INPUT") return; // don't drag if rename input is open or if the item is hidden
 
@@ -286,7 +291,7 @@ function createColumnList(html) {
 
         listItem.find("i.fa-ellipsis-vertical").on("click", (e) => {
             openDropdown(e.target, {
-                "Rename": () => {
+                "Change Display Name": () => {
                     const column = listItem.attr("name");
                     const input = $(`<input class="name" type="text" value="${column}">`);
                     listItem.find(".name").replaceWith(input);
@@ -348,6 +353,192 @@ function createColumnList(html) {
         list.append(listItem);
         loadLabels();
     }
+}
+
+async function initCreation(html) {
+    $(".pagination").css("display", "none");
+    console.log(html)
+    const dragDropArea = html.find(".drag-drop-area");
+    console.log(dragDropArea)
+
+    currentOptions.options = {};
+
+    dragDropArea.css('display', '');
+    let csv;
+    dragDropArea.on('upload', (e, file) => {
+        startLoading({fullscreen: true});
+        csv = file.content;
+        currentOptions.columns = file.content.split('\n')[0].split(',');
+        createColumnList(html);
+        stopLoading();
+        alert("CSV Loaded!");
+    });
+    const saveButton = html.find("#save");
+    saveButton.off("click")
+    saveButton.on("click", async () => {
+        startLoading({fullscreen: true});
+        const name = $("input#database-name").val();
+        const location = $("input#database-location").val();
+        const po = $("input#database-po").val();
+        const image = $("input[name='icon']:checked").val();
+        const options = {
+            "allow-inventorying": $("toggle#allow-inventorying").attr("value") === "true" ?? false,
+            "allow-additions": $("toggle#allow-additions").attr("value") === "true" ?? false,
+            "voice-search-form": {
+                "enabled": $("toggle#voice-search").attr("value") === "true" ?? false,
+                "voice-description-column": $("input#voice-description-column").val() ?? "",
+                "voice-price-column": $("input#voice-price-column").val() ?? ""
+            },
+            "print-form": {
+                "enabled": $("toggle#print").attr("value") === "true" ?? false,
+                "print-label": $("input#print-label").val() ?? "",
+                "print-year": $("input#print-year").val() ?? "",
+                "print-price-column": $("input#print-price-column").val() ?? "",
+                "print-retail-price-column": $("input#print-retail-price-column").val() ?? "",
+                "print-show-retail": $("toggle#print-show-retail").attr("value") ?? false
+            },
+            "columns": currentOptions.options.columns
+        };
+        const data = {name: name, location: location, po: po, image: image, columns: currentOptions.columns, options: options};
+        try {
+            const response = await $.ajax({
+                url: `${baseURL}/api/locations/`,
+                method: "POST",
+                data: JSON.stringify(data),
+                contentType: "application/json",
+                headers: {"Accept": "application/json"},
+            });
+            const success = response["success"];
+            console.log(response);
+            if (success) {
+                const id = response["id"];
+                try {
+                    const response = await $.ajax({
+                        url: `${baseURL}/api/location/${id}/`,
+                        method: "POST",
+                        data: csv,
+                        contentType: "text/csv",
+                        headers: {"Accept": "application/json"}
+                    });
+                    console.log(response);
+                    if (response["success"]) {
+                        alert(`Database Created!<br>Inserted ${response["inserted"]} records!`, () => {
+                            window.localStorage.setItem("loadedDatabase", id);
+                            window.location.reload();
+                        });
+                    } else {
+                        alert("An error occurred while uploading the CSV file.<br>Please try again or contact support.<br>${response['error']}");
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("An error occurred while uploading the CSV file.<br>Please try again or contact support.<br>${e}");
+                }
+            } else {
+                console.error(response);
+                alert("An error occurred while creating the database.<br>Please try again or contact support.<br>${response['error']}");
+            }
+            stopLoading();
+        } catch (e) {
+            console.error(e);
+            stopLoading();
+        }
+    });
+}
+
+
+async function push(id, csv) {
+
+    const count = csv.length;
+    let currentProcessed = 0;
+    let size = 1_000;
+
+    let itemsPerSecond = 0;
+    let start = new Date().getTime();
+    let countDown = 0;
+
+    for (let i = 0; i < count; i += size) {
+        // get the records from filemaker
+        const records = (await filemaker.getRecords(size, i > count ? count : i))
+            .map(record => {
+                let records = record.fields
+                // remove keys that start with g_ (filemaker internal fields)
+                for (const key in records) {
+                    if (key.startsWith("g_")) {
+                        delete records[key];
+                    }
+                }
+                return records;
+            }) // map the records to the fields
+        const json = JSON.stringify(records); // convert the records to json
+
+        try {
+            // upload the data to the server
+            await $.ajax({
+                url: `${baseURL}/api/location/${window.localStorage.getItem("loadedDatabase")}/`,
+                method: "POST",
+                data: json,
+                contentType: "application/json",
+                headers: {accept: "application/json"}
+            });
+        } catch (e) {
+            console.log(e)
+            // if an error occurs, update the loading message and return
+            updateLoadingOptions({
+                message: `An error has occurred while uploading data from filemaker.<br>Please contact support.`,
+                fullscreen: true,
+            })
+            clearInterval(countDown);
+
+            return;
+        }
+        // calculate items per second
+        const time = new Date().getTime();
+        itemsPerSecond = (size / ((time - start) / 1000));
+        start = time;
+
+        // calculate eta based on the items per second
+        const eta = (count - i) / itemsPerSecond;
+
+        // format time as 00hr 00m 00s
+        let hours = Math.floor(eta / 3600);
+        let minutes = Math.floor((eta % 3600) / 60);
+        let seconds = Math.floor(eta % 60);
+
+        // update the current processed records
+        currentProcessed += records.length;
+
+        clearInterval(countDown); // clear the interval (stop the countdown timer)
+        countDown = setInterval(() => {
+            seconds--; // decrement the seconds
+            if (seconds < 0) { // if seconds is less than 0
+                seconds = 59; // set seconds to 59
+                minutes--; // decrement minutes
+                if (minutes < 0) { // if minutes is less than 0
+                    minutes = 59; // set minutes to 59
+                    hours--; // decrement hours
+                }
+            }
+
+            // format time as 00hr 00m 00s
+            let etaFormatted = "";
+            if (hours > 0)
+                etaFormatted += `${hours}hr `;
+            if (minutes > 0)
+                etaFormatted += `${minutes}m `;
+            etaFormatted += `${seconds}s`;
+
+            // update the loading message
+            updateLoadingOptions({
+                message: `Importing data from filemaker, Please wait!<br>This can take some time.<br>Records ${currentProcessed} of ${count}<br>ETA: ${etaFormatted}`,
+                fullscreen: true,
+            })
+        }, 1000)
+
+    }
+
+    stopLoading(); // stop the loading screen
+    window.location.reload(); // reload the page
+
 }
 
 
