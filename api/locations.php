@@ -56,6 +56,32 @@ $app->get("/{id}/image", function ($request, $response, $args) {
     }
 });
 
+$app->post("/", function ($request, $response, $args) {
+    $loc = new Locations();
+    $data = $request->getParsedBody();
+    try {
+        $name = $data['name'];
+        $location = $data['location'];
+        $po = $data['po'];
+        $columns = $data['columns'];
+        $image = $data['image'] ?? "";
+        $options = $data['options'] ?? null;
+        $result = @$loc->add($name, $location, $po, $image, $columns, $options);
+        if (!$result['success'])
+            return $response->withStatus(400)->withHeader("Content-Type", "application/json")->withJson($result);
+        return $response->withHeader("Content-Type", "application/json")->withJson($result);
+    } catch (Exception $e) {
+        return $response->withStatus(500)->withHeader("Content-Type", "application/json")->withJson(["success" => false, "error" => $e->getMessage()]);
+    }
+});
+
+$app->delete("/{id}", function ($request, $response, $args) {
+    $loc = new Locations();
+    $id = $args['id'];
+    $result = $loc->delete($id);
+    return $response->withHeader("Content-Type", "application/json")->withJson($result);
+});
+
 
 $app->run();
 
