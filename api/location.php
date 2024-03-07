@@ -133,6 +133,38 @@ $app->post("/search", function ($request, $response, $args) {
     return $response->withJson($result);
 });
 
+$app->post("/", function ($request, $response, $args) {
+    $loc = new Location($args["id"]);
+    $body = $request->getBody();
+    if ($request->getHeader("Content-Type")[0] == "text/csv") {
+        try {
+            $result = $loc->importCSV($body);
+            return $response->withJson($result);
+        } catch (Exception $e) {
+            return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
+        }
+    } else {
+        $json = json_decode($body, true);
+        if (!$json || json_last_error_msg() != "No error") {
+            return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
+        }
+        try {
+            if (isset($json["id"])) {
+                $result = $loc->edit($json);
+            } else {
+                $result = $loc->add($json);
+
+            }
+            if ($result["success"] == 0 && $result["failure"] > 0) {
+                return $response->withStatus(400)->withJson($result);
+            }
+            return $response->withJson($result);
+        } catch (Exception $e) {
+            return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
+        }
+    }
+});
+
 
 $app->run();
 
