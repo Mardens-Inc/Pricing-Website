@@ -35,6 +35,20 @@ $app->get("/", function ($request, $response, $args) {
     return $response->withHeader("Content-Type", "application/json")->withJson($result);
 });
 
+$app->get("/{record}", function ($request, $response, $args) {
+    try {
+        $loc = new Location($args["id"]);
+        $record = $args["record"];
+        $result = $loc->get($record);
+        if ($result == []) {
+            return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
+        }
+        return $response->withJson($result);
+    } catch (Exception $e) {
+        return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
+    }
+});
+
 $app->get("/export", function ($request, $response, $args) {
     $loc = new Location($args["id"]);
     // get the format from the accept header
