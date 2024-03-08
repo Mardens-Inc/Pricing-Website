@@ -92,6 +92,27 @@ class Location
 
     }
 
+    /**
+     * Retrieves information from the database based on the given ID.
+     *
+     * @param string $id The ID to retrieve the information for.
+     *
+     * @return array The fetched data from the database.
+     * @throws Exception If the provided ID is empty or invalid.
+     */
+    public function get(string $id): array
+    {
+        $id = $this->hashids->decode($id);
+        if (empty($id)) throw new Exception("Invalid ID");
+        $id = $id[0];
+        $sql = "SELECT * FROM `$this->id` WHERE id = $id";
+        $result = $this->connection->query($sql);
+        if (!$result) {
+            return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
+        }
+        return $result->fetch_assoc();
+    }
+
 
     /**
      * Gets a list of locations
