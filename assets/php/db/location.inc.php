@@ -69,9 +69,13 @@ class Location
      */
     public function edit(array $json): array
     {
-        // $id = $this->hashids->decode($id)[0];
         $itemId = $json["id"];
-        $itemId = $this->hashids->decode($itemId)[0];
+        $itemId = $this->hashids->decode($itemId);
+        if (empty($itemId)) {
+            return ["success" => false, "error" => "Invalid Item ID"];
+        }
+        $itemId = $itemId[0];
+
         unset($json["id"]);
         $sql = "UPDATE `$this->id` SET ";
 
@@ -88,7 +92,7 @@ class Location
 
         $sql .= " WHERE id = $itemId LIMIT 1";
 
-        return ["success" => $this->connection->query($sql), "id" => $itemId];
+        return ["success" => $this->connection->query($sql), "id" => $this->hashids->encode($itemId)];
 
     }
 
@@ -102,15 +106,21 @@ class Location
      */
     public function get(string $id): array
     {
-        $id = $this->hashids->decode($id);
-        if (empty($id)) throw new Exception("Invalid ID");
-        $id = $id[0];
-        $sql = "SELECT * FROM `$this->id` WHERE id = $id";
-        $result = $this->connection->query($sql);
-        if (!$result) {
-            return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
+        try {
+            $id = $this->hashids->decode($id);
+            if (empty($id)) throw new Exception("Invalid ID");
+            $id = $id[0];
+            $sql = "SELECT * FROM `$this->id` WHERE id = $id";
+            $result = $this->connection->query($sql);
+            if (!$result) {
+                return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
+            }
+            $result = $result->fetch_assoc();
+            $result["id"] = $this->hashids->encode($result["id"]);
+            return $result;
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage()];
         }
-        return $result->fetch_assoc();
     }
 
 
@@ -255,6 +265,25 @@ class Location
                     return ["success" => false, "error" => "Failed to remove column '$column'"];
                 }
             }
+        }
+        return ["success" => true];
+    }
+
+    /**
+     * Add a new column to the database table.
+     *
+     * @param string $column The name of the column to be added.
+     *
+     * @return array An array with a success status and an optional error message.
+     *               - If the column is added successfully, returns ["success" => true].
+     *               - If an error occurs while adding the column, returns ["success" => false, "error" => "Failed to add column '$column'"].
+     */
+    public function addColumn(string $column): array
+    {
+        $sql = "ALTER TABLE `$this->id` ADD COLUMN `$column` TEXT";
+        $result = @$this->connection->query($sql);
+        if (!$result) {
+            return ["success" => false, "error" => "Failed to add column '$column'"];
         }
         return ["success" => true];
     }
@@ -419,7 +448,17 @@ class Location
         return ["success" => true, "id" => $this->id];
     }
 
-    public function export(mixed $format)
+    /**
+     * Export data in various formats.
+     *
+     * @return string|array The exported data in the specified format, or an array with a success status and error message.
+     *                     - For "application/json" format, returns JSON-encoded data.
+     *                     - For "text/csv" format, returns CSV-formatted data.
+     *                     - For "text/xml" format, returns XML-formatted data.
+     *                     - For "application/xlsx" format, returns a temporary file path to the exported XLSX file.
+     *                     - For any other format, returns an array with a success status (false) and an error message.
+     */
+    public function export(): array|string
     {
         $sql = "SELECT * FROM `$this->id`";
         $result = $this->connection->query($sql);
@@ -432,40 +471,20 @@ class Location
             $locations[] = $row;
         }
 
-        switch ($format) {
-            case "application/json":
-                return json_encode($locations);
-            case "text/csv":
-                $csv = "";
-                $columns = array_keys($locations[0]);
-                $csv .= implode(",", $columns) . "\n";
-                $csv .= "\"";
-                foreach ($locations as $location) {
-                    // replace any quotes or commas in the values with a space
-                    $location = array_map(function ($value) {
-                        return str_replace(["\"", ","], " ", $value);
-                    }, $location);
+        $csv = "";
+        $columns = array_keys($locations[0]);
+        $csv .= implode(",", $columns) . "\n";
+        $csv .= "\"";
+        foreach ($locations as $location) {
+            // replace any quotes or commas in the values with a space
+            $location = array_map(function ($value) {
+                return str_replace(["\"", ","], " ", $value);
+            }, $location);
 
-                    // wrap each value in quotes and separate with commas
-                    $csv .= implode("\",\"", $location) . "\"\n\"";
-                }
-                $csv = rtrim($csv, "\"\n");
-                return $csv;
-            case "text/xml":
-                $xml = new SimpleXMLElement("<?xml version=\"1.0\"?><locations></locations>");
-                array_walk_recursive($locations, array($xml, 'addChild'));
-                return $xml->asXML();
-            case "application/xlsx":
-                $spreadsheet = new PhpOffice\PhpSpreadsheet\Spreadsheet();
-                $sheet = $spreadsheet->getActiveSheet();
-                $sheet->fromArray($locations, null, 'A1');
-                $writer = new PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
-                $file = tempnam(sys_get_temp_dir(), "locations");
-                $writer->save($file);
-                return $file;
-            default:
-                return ["success" => false, "error" => "Invalid format"];
+            // wrap each value in quotes and separate with commas
+            $csv .= implode("\",\"", $location) . "\"\n\"";
         }
+        return rtrim($csv, "\"\n");
     }
 
     /**
