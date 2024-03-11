@@ -35,6 +35,20 @@ $app->get("/", function ($request, $response, $args) {
     return $response->withHeader("Content-Type", "application/json")->withJson($result);
 });
 
+
+$app->get("/export", function ($request, $response, $args) {
+    $loc = new Location($args["id"]);
+
+    try {
+        $result = $loc->export();
+    } catch (Exception $e) {
+        return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
+    }
+
+    $response->write($result);
+    return $response->withHeader("Content-Type", "text/csv")->withHeader("Content-Disposition", "attachment; filename=export.csv");
+});
+
 $app->get("/{record}", function ($request, $response, $args) {
     try {
         $loc = new Location($args["id"]);
@@ -48,22 +62,6 @@ $app->get("/{record}", function ($request, $response, $args) {
         return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
     }
 });
-
-$app->get("/export", function ($request, $response, $args) {
-    $loc = new Location($args["id"]);
-    // get the format from the accept header
-    $format = $request->getHeader("Accept")[0] ?? "application/csv";
-
-    try {
-        $result = $loc->export($format);
-    } catch (Exception $e) {
-        return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
-    }
-
-    $response->write($result);
-    return $response->withHeader("Content-Type", $format);
-});
-
 $app->get('/columns', function ($request, $response, $args) {
     $loc = new Location($args["id"]);
     $result = $loc->getColumns();
@@ -169,14 +167,35 @@ $app->post("/", function ($request, $response, $args) {
                 $result = $loc->add($json);
 
             }
-            if ($result["success"] == 0 && $result["failure"] > 0) {
+            if (!$result["success"]) {
                 return $response->withStatus(400)->withJson($result);
+            } else {
+
+                if ($result["success"] == 0 && $result["failure"] > 0) {
+                    return $response->withStatus(400)->withJson($result);
+                }
+                return $response->withJson($result);
             }
-            return $response->withJson($result);
         } catch (Exception $e) {
             return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
         }
     }
+});
+
+$app->post("/column/{column}", function ($request, $response, $args) {
+    $loc = new Location($args["id"]);
+    $result = $loc->addColumn($args["column"]);
+    return $response->withJson($result);
+});
+
+$app->delete("/{record}", function ($request, $response, $args) {
+    $loc = new Location($args["id"]);
+    $record = $args["record"];
+    $result = $loc->delete($record);
+    if ($result == []) {
+        return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
+    }
+    return $response->withJson($result);
 });
 
 
