@@ -1,0 +1,163 @@
+<style>
+    #history-list {
+        .list-item {
+            position: relative;
+
+            &[type="added"] {
+                color: var(--primary);
+            }
+
+            &[type="updated"] {
+                color: #467bdf;
+            }
+
+            &[type="deleted"] {
+                color: red;
+            }
+
+            .icon i {
+                font-size: 1.5rem;
+                margin-right: 1rem;
+            }
+
+            .view-history:focus ~ .history-comparison {
+                display: unset;
+            }
+
+            .history-comparison {
+                display: none;
+                width: calc(82% - 4rem);
+                padding: 1rem 2rem;
+                position: absolute;
+                left: 42%;
+                right: 0;
+                transform: translateX(-50%);
+                background-color: #383636;
+                z-index: 1;
+                border-radius: 5px;
+                text-align: start;
+                color: white;
+                box-shadow: 1px 0 8px 0 black;
+
+                &.active {
+                    display: unset;
+                }
+
+                div {
+                    width: 100%;
+                    margin: 0.5rem 0;
+                    display: flex;
+                    justify-content: start;
+                    align-items: center;
+
+                    .content {
+                        width: 65%;
+                        margin-left: auto;
+                        display: flex;
+                        align-items: center;
+                        text-align: start;
+
+                        .old {
+                            color: #ff6b6b;
+                            --width: 45px;
+                            width: var(--width);
+                            max-width: var(--width);
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
+
+                        .new {
+                            color: #6bff6b;
+                            --width: 147px;
+                            width: var(--width);
+                            max-width: var(--width);
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                        }
+
+                        i {
+                            width: 100px;
+                            text-align: center;
+                        }
+                    }
+                }
+
+            }
+
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+
+            .history-comparison {
+                top: 0;
+                transform: translateX(-50%) translateY(-56%);
+            }
+        }
+    }
+
+</style>
+
+
+<div class="col">
+    <h1>History</h1>
+    <div id="history-list" class="list col">
+
+        <div class="list-item center vertical fill" type="added">
+            <div>Added</div>
+            <div>Drew Chase</div>
+            <div>12:16:22 PM - 03/12/2024</div>
+            <div>
+                <button title="View changed data"><i class="fa fa-eye"></i></button>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+
+<script>
+    $(document).on('loadPopup', (element, data) => {
+        const historyElement = $("#history-list");
+        historyElement.empty();
+        /**
+         * @type {RecordHistory[]}
+         */
+        data = data.data.history.sort((a, b) => new Date(b.date) - new Date(a.date));
+        for (let i = 0; i < data.length; i++) {
+            const item = data[i];
+            let difference = ' ';
+            const appendDifference = (key, prev, curr) => {
+                difference += `<div>${key}: <div class="content"><span class="old">${prev !== undefined ? prev : '?'}</span> <i class="fa-solid fa-arrow-right"></i> <span class="new">${curr}</span></div></div>`;
+            };
+
+            for (const key in item.data) {
+                if (item.data.hasOwnProperty(key)) {
+                    const previous = i !== data.length - 1 ? data[i + 1] : null;
+                    const prev = previous && previous.data[key];
+                    const curr = item.data[key];
+                    if (prev !== curr || i === data.length - 1) {
+                        appendDifference(key, prev, curr);
+                    }
+                }
+            }
+
+            const icon = item.action.toLowerCase() === 'added' ? 'fa-plus-circle' : item.action.toLowerCase() === 'updated' ? 'fa-square-pen' : 'fa-ban';
+
+            const html = $(`
+                <div class="list-item center vertical fill" type="${item.action.toLowerCase()}">
+                    <div class="icon" title="Item was ${item.action}"><i class="fa ${icon}"></i></div>
+                    <div class="fill user" >${item.user.username}</div>
+                    <div class="fill date">${new Date(item.date).toLocaleString()}</div>
+                    <div>
+                        <button class="view-history" title="View changed data"><i class="fa fa-eye"></i></button>
+                        <div class="history-comparison">${difference}</div>
+                    </div>
+                </div>
+`);
+            historyElement.append(html);
+        }
+
+        $(document).trigger('load')
+    })
+</script>
