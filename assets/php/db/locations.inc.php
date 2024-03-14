@@ -24,7 +24,7 @@ class Locations
             `location` varchar(255) NOT NULL,
             `po` varchar(255) NOT NULL,
             `image` varchar(255) NOT NULL,
-            `options` varchar(4096) NOT NULL DEFAULT '{}',
+            `options` json NOT NULL,
             `post_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             PRIMARY KEY (`id`)
           ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
@@ -104,6 +104,7 @@ class Locations
         while ($row = $result->fetch_assoc()) {
             $row["id"] = $this->hashids->encode($row["id"]);
             $row["image"] = @$this->get_image($row["id"])["image"] ?? "";
+            $row["options"] = @json_decode($row["options"], true) ?? [];
             $locations[] = $row;
         }
         return $locations;
@@ -139,7 +140,8 @@ class Locations
      * @param string $location The location name/address of the location, eg "123 Main St, City, State"
      * @param string $po The PO of the location
      * @param string $image The icon/logo of the location
-     * @param array $columns
+     * @param array $columns The columns of the location
+     * @param array|null $options The options of the location
      * @return array An array containing the ID of the newly inserted location and whether the operation was successful
      */
     public function add(string $name, string $location, string $po, string $image, array $columns, array $options = null): array
@@ -164,7 +166,10 @@ class Locations
                 $tableItems .= ", `$column` varchar(1024) DEFAULT NULL";
             }
 
-            $sql = "CREATE TABLE `$id` (`id` int(11) NOT NULL AUTO_INCREMENT$tableItems,`date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY (`id`)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
+            $sql = "CREATE TABLE `$id` (`id` int(11) NOT NULL AUTO_INCREMENT$tableItems,
+                                        `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, `history` json NOT NULL,PRIMARY KEY (`id`),
+                                        `last_modified_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)
+                    ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
             // die($sql);
             $result = $this->connection->query($sql);
 
@@ -229,14 +234,28 @@ class Locations
 
     public function get_images(): array
     {
+        // Define the target directory and an empty images array
         $target_dir = $_SERVER["DOCUMENT_ROOT"] . "/assets/images/locations/";
         $images = array();
-        foreach (glob($target_dir . "*.png") as $filename) {
-            $filename = str_replace($target_dir, "", $filename);
-            $name = str_replace(".png", "", $filename);
-            $file = $_SERVER["DOCUMENT_ROOT"] . "/assets/images/locations/" . $filename;
-            $images[] = ["name" => $name, "url" => (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $filename . "?v=" . filemtime($file), "file" => $filename];
+
+        // Loop through all the files in the directory
+        foreach (glob($target_dir . "*.*") as $filepath) {
+            // Get the file extension
+            $file_extension = pathinfo($filepath, PATHINFO_EXTENSION);
+
+            // Check if the file has the desired extension (.svg, .png, .jpeg, .jpg)
+            if (in_array($file_extension, ['svg', 'png', 'jpg', 'jpeg'])) {
+                // Prepare the data to be saved in the images array
+                $name = pathinfo($filepath, PATHINFO_FILENAME);
+                $filename = pathinfo($filepath, PATHINFO_BASENAME);
+                $url = (isset($_SERVER["HTTPS"]) ? "https://" : "http://") . $_SERVER["HTTP_HOST"] . "/assets/images/locations/" . $filename . "?v=" . filemtime($filepath);
+
+                // Save the image data in the images array
+                $images[] = ["name" => $name, "url" => $url, "file" => $filename];
+            }
         }
+
+        // Return the array of images
         return $images;
     }
 
@@ -276,11 +295,11 @@ class Locations
         }
         $id = $id[0];
         $sql = "UPDATE locations SET name = '$name', location = '$location', po = '$po', image = '$image', options = '$options' WHERE id = $id";
-        // echo $sql;
         $result = $this->connection->query($sql);
         if (!$result) {
             return ["success" => false];
         }
+
         return ["success" => true];
     }
 
@@ -292,6 +311,11 @@ class Locations
      */
     public function from_og(bool $insert = false): array
     {
+        $result = $this->deleteAll();
+        if (!$result["success"]) {
+            return ["success" => false, "error" => "Failed to delete all locations: " . $result["error"]];
+        }
+
         $json = file_get_contents("https://pricing.mardens.com/data/db_list.json");
         try {
             $json = json_decode($json, true);
@@ -318,7 +342,7 @@ class Locations
         $insertedLocationItems = 0;
         $failedLocationItems = 0;
         foreach ($locations as $location) {
-            $result = $this->add($location["name"], $location["location"], $location["po"], $location["image"], []);
+            $result = $this->add($location["name"], $location["location"], $location["po"], $location["image"], [], ["from_filemaker" => true]);
             if ($result["success"]) {
                 $insertedLocations++;
             } else {
@@ -331,4 +355,45 @@ class Locations
         $stats["items"]["failed"] = $failedLocationItems;
         return ["success" => true, "stats" => $stats, "locations" => $locations];
     }
+
+    /**
+     * Delete all data in the locations table and drop all tables in the database.
+     *
+     * @return array The result of the operation. ["success" => true] if successful, otherwise ["success" => false, "error" => "error message"].
+     */
+    public function deleteAll(): array
+    {
+        try {
+
+            $sql = "TRUNCATE TABLE locations";
+            $result = $this->connection->query($sql);
+            if (!$result) {
+                return ["success" => false, "error" => "Failed to truncate table"];
+            }
+
+            // Loop through all tables in the database and drop them
+            $sql = "SHOW TABLES";
+            $result = @$this->connection->query($sql);
+            if (!$result) {
+                return ["success" => false, "error" => "Failed to show tables"];
+            }
+            $rows = $result->fetch_all();
+            // map rows to table names
+            $rows = array_map(function ($row) {
+                return $row[0];
+            }, $rows);
+            foreach ($rows as $table) {
+                if ($table == "locations") continue;
+                $sql = "DROP TABLE `$table`";
+                $result = @$this->connection->query($sql);
+                if (!$result) {
+                    return ["success" => false, "error" => "Failed to drop table: $table"];
+                }
+            }
+            return ["success" => true];
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage()];
+        }
+    }
+
 }
