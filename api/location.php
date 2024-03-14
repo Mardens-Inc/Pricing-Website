@@ -35,6 +35,17 @@ $app->get("/", function ($request, $response, $args) {
     return $response->withHeader("Content-Type", "application/json")->withJson($result);
 });
 
+$app->get("/history", function ($request, $response, $args) {
+    $loc = new Location($args["id"]);
+    try {
+        $result = $loc->history();
+        if (!$result["success"]) return $response->withStatus(400)->withJson($result);
+        return $response->withJson($result);
+    } catch (Exception $e) {
+        return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
+    }
+});
+
 
 $app->get("/export", function ($request, $response, $args) {
     $loc = new Location($args["id"]);
@@ -90,7 +101,7 @@ $app->post("/add/filemaker", function ($request, $response, $args) {
 $app->patch("/", function ($request, $response, $args) {
     require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/db/locations.inc.php";
     $json = json_decode(file_get_contents("php://input"), true);
-    if (!$json || json_last_error_msg() != "No error") {
+    if (json_last_error_msg() != "No error") {
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
     }
     $loc = new Locations();
@@ -114,9 +125,16 @@ $app->patch("/columns/{column}", function ($request, $response, $args) {
     if (!$json || json_last_error_msg() != "No error") {
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
     }
-    $loc = new Location($args["id"]);
-    $result = $loc->renameColumn($args["column"], $json["name"]);
-    return $response->withJson($result);
+    try {
+        $loc = new Location($args["id"]);
+        $result = $loc->renameColumn($args["column"], $json["name"]);
+        if (!$result["success"]) {
+            return $response->withStatus(400)->withJson($result);
+        }
+        return $response->withJson($result);
+    } catch (Exception $e) {
+        return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
+    }
 });
 $app->patch("/columns", function ($request, $response, $args) {
     $json = json_decode(file_get_contents("php://input"), true);
@@ -151,6 +169,7 @@ $app->post("/", function ($request, $response, $args) {
     if ($request->getHeader("Content-Type")[0] == "text/csv") {
         try {
             $result = $loc->importCSV($body);
+            if (!$result["success"]) return $response->withStatus(400)->withJson($result);
             return $response->withJson($result);
         } catch (Exception $e) {
             return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
