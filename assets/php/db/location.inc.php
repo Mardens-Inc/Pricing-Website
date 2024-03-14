@@ -30,31 +30,34 @@ class Location
         $success = 0;
         $failure = 0;
         try {
-            $sql = "";
-
             foreach ($json as $item) {
-                $sql = "INSERT INTO `$this->id` (";
-                foreach ($item as $key => $value) {
-                    $sql .= "`$key`, ";
+                if (isset($item["history"]) && is_array($item["history"]))
+                    $item["history"] = json_encode($item["history"]);
+                $fields = array_keys($item);
+                $placeholders = str_repeat("?,", count($fields) - 1) . "?";
+                $sql = "INSERT INTO `$this->id` (`" . implode("`,`", $fields) . "`) VALUES ($placeholders)";
+                // prepare statement
+                $stmt = $this->connection->prepare($sql);
+                if ($stmt === false) {
+                    $failure++;
+                    return ["error" => $this->connection->error, "success" => $success, "failure" => $failure, "sql" => $sql];
                 }
-                $sql = rtrim($sql, ", ");
-                $sql .= ") VALUES (";
-                foreach ($item as $key => $value) {
-                    $value = trim($value);
-                    $value = mysqli_real_escape_string($this->connection, $value);
-                    $sql .= "'$value', ";
-                }
-                $sql = rtrim($sql, ", ");
-                $sql .= ");";
+                // bind params
+                $types = str_repeat('s', count($item)); // consider all params as strings
+                $stmt->bind_param($types, ...array_values($item));
                 try {
-                    $result = $this->connection->query($sql);
+                    $result = $stmt->execute();
+                    if (!$result) {
+                        $failure++;
+                        return ["error" => $stmt->error, "success" => $success, "failure" => $failure, "sql" => $sql];
+                    }
                     $success++;
                 } catch (Exception $e) {
                     $failure++;
                     return ["error" => $e->getMessage(), "success" => $success, "failure" => $failure, "sql" => $sql];
                 }
+                $stmt->close();
             }
-
         } catch (Exception $e) {
             return ["error" => $e->getMessage(), "success" => $success, "failure" => $failure];
         }
@@ -75,10 +78,11 @@ class Location
             return ["success" => false, "error" => "Invalid Item ID"];
         }
         $itemId = $itemId[0];
+        $json["history"] = json_encode($json["history"]);
 
         unset($json["id"]);
-        $sql = "UPDATE `$this->id` SET ";
 
+        $sql = "UPDATE `$this->id` SET ";
         $keys = array_keys($json);
         for ($i = 0; $i < count($keys); $i++) {
             $key = $keys[$i];
@@ -117,6 +121,7 @@ class Location
             }
             $result = $result->fetch_assoc();
             $result["id"] = $this->hashids->encode($result["id"]);
+            $result["history"] = json_decode($result["history"], true);
             return $result;
         } catch (Exception $e) {
             return ["success" => false, "error" => $e->getMessage()];
@@ -136,66 +141,72 @@ class Location
      */
     public function list(int $max_count = 0, int $page = 0, string $sort = "", bool $ascending = true, string $query = "", array $searchColumns = []): array
     {
-        // If max_count is 0, return all locations
-        $sql = "SELECT * FROM `$this->id`";
-        if (!empty($query)) {
-            $columns = empty($searchColumns) ? $this->getColumns()["columns"] : $searchColumns;
-            $sql .= " WHERE (";
-            foreach ($columns as $column) {
-                $sql .= "$column LIKE '%$query%' OR ";
-            }
-            $sql = rtrim($sql, "OR ");
-            $sql .= ")";
-        }
-        if (!empty($sort)) {
-            $sql .= " ORDER BY $sort";
-            if ($ascending) {
-                $sql .= " ASC";
-            } else {
-                $sql .= " DESC";
-            }
-        }
-
-        if (!empty($max_count)) {
-            // If max_count is not 0, return the specified number of locations and offset by the specified amount
-            $page = $page * $max_count; // Offset is the page number * the max number of locations per page
-            $sql .= " LIMIT $max_count OFFSET $page";
-        }
-
-        $result = $this->connection->query($sql);
-        if (!$result) {
-            return ["success" => false, "error" => "Failed to send query to database '$this->id'"]; // If the query failed, return an empty array
-        }
-
-        // Make an array of locations from the query results
-        $locations = array();
-        while ($row = $result->fetch_assoc()) {
-            $row["id"] = $this->hashids->encode($row["id"]);
-            array_push($locations, $row);
-        }
-
-        $count = 0;
-
-        $sql = "SELECT COUNT(*) FROM `$this->id`";
-        if (!empty($query)) {
-            $columns = empty($searchColumns) ? $this->getColumns()["columns"] : $searchColumns;
-            $sql .= " WHERE (";
-            foreach ($columns as $column) {
-                $sql .= "$column LIKE '%$query%' OR ";
-            }
-            $sql = rtrim($sql, "OR ");
-            $sql .= ")";
-        }
         try {
-            $result = $this->connection->query($sql);
-        } catch (Exception $e) {
-            return ["success" => false, "error" => $e->getMessage(), "sql" => $sql];
-        }
-        if ($result) {
-            $count = $result->fetch_assoc()["COUNT(*)"];
-        }
 
-        return ["total_results" => $count, "max_count" => $max_count, "page" => $page, "success" => true, "items" => $locations];
+            // If max_count is 0, return all locations
+            $sql = "SELECT * FROM `$this->id`";
+            if (!empty($query)) {
+                $columns = empty($searchColumns) ? $this->getColumns()["columns"] : $searchColumns;
+                $sql .= " WHERE (";
+                foreach ($columns as $column) {
+                    $sql .= "`$column` LIKE '%$query%' OR ";
+                }
+                $sql = rtrim($sql, "OR ");
+                $sql .= ")";
+            }
+            if (!empty($sort)) {
+                $sql .= " ORDER BY `$sort`";
+                if ($ascending) {
+                    $sql .= " ASC";
+                } else {
+                    $sql .= " DESC";
+                }
+            }
+
+            if (!empty($max_count)) {
+                // If max_count is not 0, return the specified number of locations and offset by the specified amount
+                $page = $page * $max_count; // Offset is the page number * the max number of locations per page
+                $sql .= " LIMIT $max_count OFFSET $page";
+            }
+
+            $result = $this->connection->query($sql);
+            if (!$result) {
+                return ["success" => false, "error" => "Failed to send query to database '$this->id'"]; // If the query failed, return an empty array
+            }
+
+            // Make an array of locations from the query results
+            $locations = array();
+            while ($row = $result->fetch_assoc()) {
+                $row["id"] = $this->hashids->encode($row["id"]);
+                $row["history"] = json_decode($row["history"], true);
+                $locations[] = $row;
+            }
+
+            $count = 0;
+
+            $sql = "SELECT COUNT(*) FROM `$this->id`";
+            if (!empty($query)) {
+                $columns = empty($searchColumns) ? $this->getColumns()["columns"] : $searchColumns;
+                $sql .= " WHERE (";
+                foreach ($columns as $column) {
+                    $sql .= "`$column` LIKE '%$query%' OR ";
+                }
+                $sql = rtrim($sql, "OR ");
+                $sql .= ")";
+            }
+            try {
+                $result = $this->connection->query($sql);
+            } catch (Exception $e) {
+                return ["success" => false, "error" => $e->getMessage(), "sql" => $sql];
+            }
+            if ($result) {
+                $count = $result->fetch_assoc()["COUNT(*)"];
+            }
+
+            return ["total_results" => $count, "max_count" => $max_count, "page" => $page, "success" => true, "items" => $locations];
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage(), "total_results" => 0, "max_count" => $max_count, "page" => $page, "items" => [], "sql" => $sql];
+        }
     }
 
     /**
@@ -246,13 +257,17 @@ class Location
         }
         $currentColumns = $currentColumns["columns"];
         foreach ($columns as $column) {
-            if ($column == "id" || $column == "date") continue;
-            if (!in_array($column, $currentColumns)) {
-                $sql = "ALTER TABLE `$this->id` ADD COLUMN `$column` TEXT";
-                $result = $this->connection->query($sql);
-                if (!$result) {
-                    return ["success" => false, "error" => "Failed to add column '$column'"];
+            try {
+                if ($column == "id" || $column == "date") continue;
+                if (!in_array($column, $currentColumns)) {
+                    $sql = "ALTER TABLE `$this->id` ADD COLUMN `$column` TEXT";
+                    $result = $this->connection->query($sql);
+                    if (!$result) {
+                        return ["success" => false, "error" => "Failed to add column '$column'"];
+                    }
                 }
+            } catch (Exception $e) {
+                return ["success" => false, "error" => $e->getMessage()];
             }
         }
 
@@ -297,12 +312,16 @@ class Location
      */
     public function renameColumn(string $oldName, string $newName): array
     {
-        $sql = "ALTER TABLE `$this->id` CHANGE COLUMN `$oldName` `$newName` TEXT";
-        $result = $this->connection->query($sql);
-        if (!$result) {
-            return ["success" => false, "error" => "Failed to rename column '$oldName' to '$newName'"];
+        try {
+            $sql = "ALTER TABLE `$this->id` CHANGE COLUMN `$oldName` `$newName` TEXT";
+            $result = $this->connection->query($sql);
+            if (!$result) {
+                return ["success" => false, "error" => "Failed to rename column '$oldName' to '$newName'"];
+            }
+            return ["success" => true];
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage()];
         }
-        return ["success" => true];
     }
 
     /**
@@ -418,7 +437,7 @@ class Location
      * Deletes all records from a table
      * @return array An array containing the success status and error message if applicable
      */
-    public function deleteAllRecords()
+    public function deleteAllRecords(): array
     {
         http_response_code(500);
         $sql = "truncate table `$this->id`";
@@ -468,11 +487,27 @@ class Location
 
         $locations = array();
         while ($row = $result->fetch_assoc()) {
+            // remove id, date, and history columns
+            if (isset($row["id"]))
+                unset($row["id"]);
+            if (isset($row["date"]))
+                unset($row["date"]);
+            if (isset($row["history"]))
+                unset($row["history"]);
             $locations[] = $row;
         }
 
         $csv = "";
         $columns = array_keys($locations[0]);
+        // remove id, date, and history columns
+        if (isset($columns["id"]))
+            unset($columns["id"]);
+        if (isset($columns["date"]))
+            unset($columns["date"]);
+        if (isset($columns["history"]))
+            unset($columns["history"]);
+
+
         $csv .= implode(",", $columns) . "\n";
         $csv .= "\"";
         foreach ($locations as $location) {
@@ -505,21 +540,66 @@ class Location
             $cols .= "`$column`, ";
         }
         $cols = rtrim($cols, ", ");
-        $stmt = $this->connection->prepare("INSERT INTO `$this->id` ($cols) VALUES (" . str_repeat('?,', count($columns) - 1) . "?)");
+        $sql = "INSERT INTO `$this->id` ($cols, history) VALUES (" . str_repeat('?,', count($columns) - 1) . "?, ?)";
+        try {
+            $stmt = $this->connection->prepare($sql);
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage(), "sql" => $sql, "message" => "Failed to prepare statement"];
+        }
         for ($i = 1; $i < count($csv); $i++) {
             try {
                 $row = str_getcsv($csv[$i]);
+                $date = date("Y-m-d H:i:s");
+                $currentRow = json_encode($row);
+                $row[] = "[{\"user\": \"System\", \"action\": \"Added\", \"date\": \"$date\", \"data\": $currentRow}]";
                 $stmt->bind_param(str_repeat('s', count($row)), ...$row);
                 $result = $stmt->execute();
                 if (!$result) {
                     return ["success" => false, "error" => "Failed to send query to database '$this->id'", "sql" => $stmt->error];
                 }
             } catch (Exception $e) {
-                return ["success" => false, "error" => $e->getMessage()];
+                return ["success" => false, "error" => $e->getMessage(), "line" => $csv[$i]];
             }
 
         }
         $stmt->close();
         return ["success" => true, "inserted" => count($csv) - 1];
+    }
+
+    /**
+     * Retrieve the history data from the specified table.
+     *
+     * @return array An array with a success status and the history data.
+     *               - For a successful retrieval, it returns ["success" => true, "history" => $history].
+     *                 - "success" (bool): The status of the query execution.
+     *                 - "history" (array): The retrieved history data from the table.
+     *               - If the query execution fails, it returns ["success" => false, "error" => $errorMessage].
+     *                 - "success" (bool): The status of the query execution.
+     *                 - "error" (string): The error message indicating the failure to send the query to the database.
+     */
+    public function history(): array
+    {
+        try {
+            $sql = "SELECT id,history FROM `$this->id` ORDER BY `last_modified_date` DESC limit 1000";
+            $result = $this->connection->query($sql);
+            if (!$result) {
+                return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
+            }
+            $history = [];
+            $results = $result->fetch_all();
+            foreach ($results as $rows) {
+                $id = $rows[0];
+                $row = json_decode($rows[1], true);
+                foreach ($row as $key => $value) {
+                    $row[$key]["id"] = $this->hashids->encode($id);
+                    $history[] = $row[$key];
+                }
+
+            }
+
+            return ["success" => true, "history" => $history];
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage()];
+        }
     }
 }
