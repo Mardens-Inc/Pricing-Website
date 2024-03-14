@@ -1,4 +1,5 @@
 import Filemaker from "https://cdn.jsdelivr.net/gh/Mardens-Inc/Filemaker-API@8b2058fa149e11278487d0cadd3d2b33f37691e3/js/Filemaker.js";
+import auth from "./authentication.js";
 import {startLoading, stopLoading, updateLoadingOptions} from "./loading.js";
 
 const filemaker = new Filemaker("https://lib.mardens.com/fmutil", "admin", "19MRCC77!");
@@ -176,8 +177,14 @@ async function navigateToDatabaseLayoutList(html) {
                 //     if (response["success"] !== undefined && response["success"] === true)
                 //         window.location.reload();
                 // }, 3000)
-            } catch {
-                console.log("error")
+            } catch (e) {
+                console.error("Unable to push data from filemaker to server")
+                console.error(e)
+                updateLoadingOptions({
+                    message: `An error has occurred while uploading data from filemaker.<br>Please contact support.`,
+                    fullscreen: true,
+                })
+
             }
         }
     });
@@ -201,20 +208,90 @@ async function push() {
     let itemsPerSecond = 0;
     let start = new Date().getTime();
     let countDown = 0;
+    let hours = 0;
+    let minutes = 0;
+    let seconds = 0;
+    let allItemsPerSecond = [];
+    let i = 0;
 
-    for (let i = 0; i < count; i += size) {
+    const calculateETA = () => {
+        // average the items per second
+        const averageItemsPerSecond = allItemsPerSecond.reduce((a, b) => a + b, 0) / allItemsPerSecond.length;
+        console.log(`Average items per second: ${averageItemsPerSecond}`)
+
+        // calculate eta based on the items per second
+        const eta = (count - i) / averageItemsPerSecond;
+
+        // format time as 00hr 00m 00s
+        hours = Math.floor(eta / 3600);
+        minutes = Math.floor((eta % 3600) / 60);
+        seconds = Math.floor(eta % 60);
+    }
+
+    setInterval(calculateETA, 10000)
+
+    countDown = setInterval(() => {
+        seconds--; // decrement the seconds
+        if (seconds < 0) { // if seconds is less than 0
+            seconds = 59; // set seconds to 59
+            minutes--; // decrement minutes
+            if (minutes < 0) { // if minutes is less than 0
+                minutes = 59; // set minutes to 59
+                hours--; // decrement hours
+                if (hours < 0) { // if hours is less than 0
+                    hours = 0; // set hours to 0
+                    minutes = 0; // set minutes to 0
+                    seconds = 0; // set seconds to 0
+                }
+            }
+        }
+
+        // format time as 00hr 00m 00s
+        let etaFormatted = "";
+        if (hours > 0)
+            etaFormatted += `${hours}hr `;
+        if (minutes > 0)
+            etaFormatted += `${minutes}m `;
+        etaFormatted += `${Math.ceil(seconds)}s`;
+
+        // update the loading message
+        updateLoadingOptions({
+            message: `Importing data from filemaker, Please wait!<br>Records ${currentProcessed} of ${count}<br>ETA: ${etaFormatted}`,
+            fullscreen: true,
+        })
+    }, 1000)
+
+    for (i = 0; i < count; i += size) {
         // get the records from filemaker
         const records = (await filemaker.getRecords(size, i > count ? count : i))
             .map(record => {
-                let records = record.fields
-                // remove keys that start with g_ (filemaker internal fields)
-                for (const key in records) {
-                    if (key.startsWith("g_")) {
-                        delete records[key];
+                    let records = record.fields
+                    // remove keys that start with g_ (filemaker internal fields)
+                    for (const key in records) {
+                        if (key.startsWith("g_")) {
+                            delete records[key];
+                        }
                     }
+                    const data = {...records};
+                    // if the records have an "id" field, rename it to "identifier" and if the records have a "date" field, rename it to "fm_date"
+                    for (const key in data) {
+                        if (key.toLowerCase() === "id") {
+                            data["identifier"] = data[key];
+                            records["identifier"] = records[key];
+                            delete data[key];
+                            delete records[key];
+                        }
+                        if (key.toLowerCase() === "date") {
+                            data["fm_date"] = data[key];
+                            records["fm_date"] = records[key];
+                            delete data[key];
+                            delete records[key];
+                        }
+                    }
+                    records["history"] = [{"user": auth.getUserProfile(), "action": "Added", "date": new Date().toISOString(), "data": data}]
+                    return records;
                 }
-                return records;
-            }) // map the records to the fields
+            ) // map the records to the fields
         const json = JSON.stringify(records); // convert the records to json
 
         try {
@@ -242,44 +319,12 @@ async function push() {
         itemsPerSecond = (size / ((time - start) / 1000));
         start = time;
 
-        // calculate eta based on the items per second
-        const eta = (count - i) / itemsPerSecond;
-
-        // format time as 00hr 00m 00s
-        let hours = Math.floor(eta / 3600);
-        let minutes = Math.floor((eta % 3600) / 60);
-        let seconds = Math.floor(eta % 60);
+        allItemsPerSecond.push(itemsPerSecond);
 
         // update the current processed records
         currentProcessed += records.length;
 
-        clearInterval(countDown); // clear the interval (stop the countdown timer)
-        countDown = setInterval(() => {
-            seconds--; // decrement the seconds
-            if (seconds < 0) { // if seconds is less than 0
-                seconds = 59; // set seconds to 59
-                minutes--; // decrement minutes
-                if (minutes < 0) { // if minutes is less than 0
-                    minutes = 59; // set minutes to 59
-                    hours--; // decrement hours
-                }
-            }
-
-            // format time as 00hr 00m 00s
-            let etaFormatted = "";
-            if(hours > 0)
-                etaFormatted += `${hours}hr `;
-            if(minutes > 0)
-                etaFormatted += `${minutes}m `;
-            etaFormatted += `${seconds}s`;
-
-            // update the loading message
-            updateLoadingOptions({
-                message: `Importing data from filemaker, Please wait!<br>This can take some time.<br>Records ${currentProcessed} of ${count}<br>ETA: ${etaFormatted}`,
-                fullscreen: true,
-            })
-        }, 1000)
-
+        if (i < 2) calculateETA();
     }
 
     stopLoading(); // stop the loading screen
@@ -293,7 +338,8 @@ async function push() {
  * @returns {Promise<void>} A promise that resolves when the columns are updated successfully.
  */
 async function setColumns() {
-    const columns = await filemaker.getRows();
+    let columns = await filemaker.getRows();
+    columns = columns.filter(row => !row.startsWith("g_")).map(c => c.toLowerCase() === "id" ? "identifier" : c.toLowerCase() === "date" ? "fm_date" : c);
     console.log(columns);
     const json = JSON.stringify(columns);
     await $.ajax({

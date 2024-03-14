@@ -1,17 +1,17 @@
-<link rel="stylesheet" href="assets/css/import-filemaker.css">
+<link href="assets/css/import-filemaker.css" rel="stylesheet">
 <h1>Import from Filemaker</h1>
-<div id="import-form" class="col">
-    <form class="col" id="filemaker-databases" action="javascript:void(0);">
+<div class="col" id="import-form">
+    <form action="javascript:void(0);" class="col" id="filemaker-databases">
         <h3>Filemaker Databases</h3>
         <div class="list col">
 
         </div>
 
         <div class="row section-navigation">
-            <button class="primary" type="submit" disabled>Next</button>
+            <button class="primary" disabled type="submit">Next</button>
         </div>
     </form>
-    <form class="col" id="databases-images" action="javascript:void(0);" style="display: none">
+    <form action="javascript:void(0);" class="col" id="databases-images" style="display: none">
         <h3>Database Icons</h3>
         <div class="list col">
 
@@ -19,16 +19,16 @@
 
         <div class="row section-navigation">
             <!--            <button class="secondary" type="button">Back</button>-->
-            <button class="primary" type="submit" disabled>Next</button>
+            <button class="primary" disabled type="submit">Next</button>
         </div>
     </form>
-    <form id="filemaker-credentials" class="col" style="display: none" action="javascript:void(0);">
+    <form action="javascript:void(0);" class="col" id="filemaker-credentials" style="display: none">
         <div class="floating-input">
-            <input type="text" id="filemaker-username" placeholder="Filemaker Username" required autocomplete="off">
+            <input autocomplete="off" id="filemaker-username" placeholder="Filemaker Username" required type="text">
             <label for="filemaker-username">Filemaker Username</label>
         </div>
         <div class="floating-input">
-            <input type="password" id="filemaker-password" placeholder="Filemaker Password" required autocomplete="off">
+            <input autocomplete="off" id="filemaker-password" placeholder="Filemaker Password" required type="password">
             <label for="filemaker-password">Filemaker Password</label>
         </div>
         <p class="error" style="text-align: center"></p>
@@ -36,14 +36,14 @@
             <button class="primary" type="submit">Next</button>
         </div>
     </form>
-    <form class="col" id="filemaker-tables" style="display: none" action="javascript:void(0);">
+    <form action="javascript:void(0);" class="col" id="filemaker-tables" style="display: none">
         <h3>Filemaker Tables</h3>
         <div class="list col">
 
         </div>
 
         <div class="row section-navigation">
-            <button class="primary" type="submit" disabled>Import</button>
+            <button class="primary" disabled type="submit">Import</button>
         </div>
     </form>
 

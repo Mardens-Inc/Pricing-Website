@@ -61,8 +61,15 @@ function openDropdown(element, items, conditionals = {}) {
         top: y,
         left: x,
         opacity: 1,
-        "pointer-events": "all"
+        "pointer-events": "all",
     })
+    if(element.width() > dropdown.width())
+    {
+        dropdown.css({
+            width: element.width(),
+            left: element.offset().left
+        })
+    }
     dropdown.trigger("focus")
 }
 

@@ -8,62 +8,64 @@
     min-height: 100px;
     overflow-y: auto;
 
-    thead {
-        display: flex;
-        justify-content: space-between;
+    table {
+        --columnSize: 150px;
 
-        th {
-            text-align: left;
-            padding: 1rem;
-            font-size: 1.2rem;
-            font-weight: 400;
-            width: 100%;
-            flex-grow: 1;
+        thead {
+            display: flex;
 
-            &.extra{
-                --width: 45px;
-                min-width: var(--width);
-                width: var(--width);
-                max-width: var(--width);
+            th {
+                text-align: left;
+                padding-block: 1rem;
+                margin-inline: 1rem;
+                font-size: 1.2rem;
+                font-weight: 400;
+                min-width: 50px;
+                width: var(--columnSize);
+                max-width: var(--columnSize);
+                flex-grow: 1;
             }
         }
-    }
 
-    tbody {
-        display: flex;
-        flex-direction: column;
-        width: 100%;
-
-        td {
+        tbody {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
             width: 100%;
-            flex-grow: 1;
-            margin-left: 1rem;
 
-            &.description {
-                align-items: start;
+            td {
+                display: flex;
+                justify-content: start;
+                align-items: center;
+                flex-grow: 1;
+                margin-left: 1rem;
+                min-width: 50px;
+                width: 50px;
+                max-width: var(--columnSize);
                 overflow: scroll;
-                margin-block: auto;
-                max-height: 50px;
-                padding-right: 10px;
-            }
 
-            &.extra {
-                justify-content: end;
-                width: auto;
-            }
+                &.description {
+                    align-items: start;
+                    overflow: scroll;
+                    margin-block: auto;
+                    max-height: 50px;
+                    padding-right: 10px;
+                }
 
-            &.price {
-                color: red;
-                font-style: italic;
-            }
+                &.extra {
+                    justify-content: end;
+                    width: auto;
+                }
 
-            &.mp {
-                color: var(--primary);
-                font-weight: 700;
-                font-style: italic;
+                &.price {
+                    color: red;
+                    font-style: italic;
+                }
+
+                &.mp {
+                    color: var(--primary);
+                    font-weight: 700;
+                    font-style: italic;
+                }
             }
         }
     }
@@ -98,14 +100,16 @@
         img {
             border-radius: 100px;
             aspect-ratio: 1;
-            height: 100%;
             object-fit: contain;
             object-position: center;
+            width: 50px;
+            height: 50px;
         }
 
         button {
             height: 100%;
             aspect-ratio: 1;
+            margin-block: 0;
 
             img {
                 height: 1rem;

@@ -10,7 +10,7 @@
  */
 let defaultOptions = {
     message: "",
-    fullscreen: false,
+    fullscreen: true,
     size: '100px',
     font: '2rem',
     color: "var(--primary)",

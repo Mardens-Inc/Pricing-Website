@@ -1,3 +1,4 @@
+import {isDedicatedClient} from "./crossplatform-utility.js";
 import {startLoading, stopLoading} from "./loading.js";
 
 /**
@@ -11,7 +12,7 @@ import {startLoading, stopLoading} from "./loading.js";
  * @returns {Promise<void>}
  */
 async function openSettings() {
-
+    if (!isDedicatedClient) return;
     startLoading({fullscreen: true})
     const list = $("main")
     list.empty();
@@ -26,7 +27,7 @@ async function openSettings() {
 }
 
 async function buildSelectPrintersSection(html, settings) {
-
+    if (!isDedicatedClient) return;
     const selectedPrintersElement = html.find("#selected-printer");
     const dropdownButton = html.find("button");
     const value = html.find(".value");
@@ -34,7 +35,7 @@ async function buildSelectPrintersSection(html, settings) {
     if (settings.selected_printer === "") {
         console.log("No printer selected")
         value.text("No printer selected");
-    }else{
+    } else {
         value.text(settings.selected_printer);
     }
 
@@ -61,6 +62,7 @@ async function buildSelectPrintersSection(html, settings) {
  * @returns {Promise<Settings>}
  */
 async function loadSettings() {
+    if (!isDedicatedClient) return null;
     const settings = await window.__TAURI__.invoke("load");
     console.log(settings);
     window.localStorage.setItem("settings", JSON.stringify(settings));
@@ -73,12 +75,14 @@ async function loadSettings() {
  *  @returns {Promise<string[]>} - A promise that resolves to an array of printers.
  */
 async function getPrinters() {
+    if (!isDedicatedClient) return [];
     const printers = await window.__TAURI__.invoke("get_printers");
     console.log(printers);
     return printers;
 }
 
 async function saveSettings(settings) {
+    if (!isDedicatedClient) return;
     await window.__TAURI__.invoke("save", {config: settings});
     window.localStorage.setItem("settings", JSON.stringify(settings));
 }

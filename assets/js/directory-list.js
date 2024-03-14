@@ -1,5 +1,5 @@
-import {startLoading, stopLoading} from "./loading.js";
 import auth from "./authentication.js";
+import {startLoading, stopLoading} from "./loading.js";
 import {alert} from "./popups.js";
 
 /**

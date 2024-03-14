@@ -176,6 +176,7 @@ input, .input {
     transition: opacity .2s;
     pointer-events: none;
     box-shadow: 0 5px 10px 0 rgba(0, 0, 0, .5);
+    z-index: 999999;
 }
 
 
@@ -227,10 +228,25 @@ ul {
         height: 1rem;
     }
 
-    li.paginationjs-ellipsis.disabled {
-        opacity: .5;
-        color: white;
-        background-color: black;
+
+    li {
+        &:hover a {
+            color: black;
+        }
+
+        &.active a {
+            color: black;
+        }
+
+        a {
+            color: white;
+        }
+
+        &.paginationjs-ellipsis.disabled {
+            opacity: .5;
+            color: white;
+            background-color: #282828;
+        }
     }
 }
 
@@ -346,4 +362,17 @@ toggle {
         color: black;
         box-shadow: inset 0 0 20px 0 black;
     }
+}
+
+a:hover {
+    text-decoration: underline;
+    filter: brightness(1.2);
+    color: var(--primary);
+}
+
+a {
+    text-decoration: none;
+    color: #a7a7a7;
+    transition: filter, color;
+    transition-duration: .2s;
 }

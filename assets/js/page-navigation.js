@@ -1,15 +1,19 @@
+import auth from "./authentication.js";
+import {isDedicatedClient} from "./crossplatform-utility.js";
 import DatabaseList from "./database-list.js";
 import DirectoryList from "./directory-list.js";
 import {startLoading, stopLoading} from "./loading.js";
 import {loadSettings, openSettings} from "./settings.js";
 
-loadSettings();
 
 const list = $("main > .list")
 resetListElement()
 const editButton = $("#edit-button");
 const newButton = $("#new-button");
 const exportButton = $("#export-button");
+
+
+exportButton.hide();
 
 $("#settings-button").on("click", async () => {
     await openSettings();
@@ -19,22 +23,31 @@ $("#settings-button").on("click", async () => {
 editButton.css('display', 'none');
 exportButton.css('display', 'none');
 
-
 const directory = new DirectoryList();
 /**
  * @type {DatabaseList|null}
  */
 let database = null;
-if (window.localStorage.getItem("loadedDatabase") !== null) {
-    database = new DatabaseList(window.localStorage.getItem("loadedDatabase"));
-    database.load();
-    editButton.css('display', "");
-    exportButton.css('display', "");
-    newButton.css('display', 'none');
-} else {
-    startLoading({fullscreen: true})
-    directory.loadView("", true).then(() => stopLoading())
-}
+$(window).on('load', async () => {
+
+    if (isDedicatedClient) {
+        await loadSettings();
+    }
+    if (window.localStorage.getItem("loadedDatabase") !== null) {
+        database = new DatabaseList(window.localStorage.getItem("loadedDatabase"));
+        await database.load();
+        editButton.css('display', "");
+        exportButton.css('display', "");
+        newButton.css('display', 'none');
+    } else {
+        startLoading({fullscreen: true})
+        await directory.loadView("", true);
+        stopLoading();
+        setTimeout(() => {
+            askToLogin();
+        }, 1000);
+    }
+})
 $(directory).on("loadExternalView", async (event, id) => {
     resetListElement()
     database = new DatabaseList(id);
@@ -98,3 +111,9 @@ function resetListElement() {
     }
 }
 
+function askToLogin() {
+    if (!auth.isLoggedIn && window.localStorage.getItem("loginPrompt") === null) {
+        window.localStorage.setItem("loginPrompt", true);
+        $("#login-button").trigger("click");
+    }
+}

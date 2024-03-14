@@ -7,8 +7,7 @@
  *
  * @return {void}
  */
-function download(filename, content, saveAs = false)
-{
+function download(filename, content, saveAs = false) {
     const blob = new Blob([content], {type: 'application/octet-stream'});
     const url = URL.createObjectURL(blob);
 
@@ -16,11 +15,9 @@ function download(filename, content, saveAs = false)
     element.setAttribute('href', url);
     element.setAttribute('download', filename);
 
-    if(saveAs)
-    {
+    if (saveAs) {
         element.setAttribute('target', '_blank');
     }
-    console.log(element);
     element.click();
 }
 

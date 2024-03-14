@@ -27,6 +27,8 @@ async function openPopup(name, data = {}) {
         });
     }, 100)
 
+    $(document).trigger("loadPopup", {data})
+
     return popup;
 }
 
@@ -91,4 +93,56 @@ function alert(message, onclose = null, onOk = null) {
     }, 100)
 }
 
-export {openPopup, closePopup, alert};
+/**
+ * Displays a confirmation popup with a message and two buttons.
+ *
+ * @param {string} message - The message to display in the popup.
+ * @param {string} [yes="Yes"] - The text to display on the "Yes" button.
+ * @param {string} [no="No"] - The text to display on the "No" button.
+ * @param {(boolean)=>{}} [submit=null] - Optional callback function to execute when a button is clicked.
+ *                                   The function will be called with a single boolean parameter indicating
+ *                                   whether the "Yes" or "No" button was clicked.
+ * @return {void}
+ */
+function confirm(message, yes = "Yes", no = "No", submit = null) {
+    let popup = $(`<div id="confirm-popup" class='popup'>`);
+    const popupContent = $(`<div class='popup-content'>`);
+    popupContent.append(`<h1>Confirm</h1>`)
+    popupContent.append(`<p>${message}</p>`)
+    const buttons = $(`<div class="row">`);
+    const okButton = $(`<button class="primary fill">${yes}</button>`);
+    buttons.append(okButton)
+    okButton.on("click", () => {
+        closePopup("confirm");
+        if (submit) {
+            submit(true);
+        }
+    });
+    const closeButton = $(`<button class="fill">${no}</button>`);
+    closeButton.on("click", () => {
+        closePopup("confirm");
+        if (submit) {
+            submit(false);
+        }
+    });
+    buttons.append(closeButton)
+
+    const bg = $('<div class="close popup-bg"></div>')
+    popup.append(popupContent);
+    popup.append(bg);
+    popupContent.append(buttons);
+    popup.appendTo("body");
+    setTimeout(() => {
+        popup.addClass("active");
+
+        popup.find(".close").on("click", () => {
+            closePopup("confirm");
+            if (submit) {
+                submit(false);
+            }
+        });
+    }, 100)
+
+}
+
+export {openPopup, closePopup, alert, confirm};
