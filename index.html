@@ -4,44 +4,44 @@
     <meta charset="UTF-8">
     <title>Pricing App</title>
 
-    <link rel="shortcut icon" href="assets/images/icon.png" type="image/x-icon">
+    <link href="assets/images/icon.png" rel="shortcut icon" type="image/x-icon">
 
-    <link rel="stylesheet" href="assets/css/main.css">
-    <link rel="stylesheet" href="assets/css/inputs.css">
-    <link rel="stylesheet" href="assets/css/nav.css">
-    <link rel="stylesheet" href="assets/css/list.css">
-    <link rel="stylesheet" href="assets/css/scrollbar.css">
-    <link rel="stylesheet" href="assets/css/popups.css">
+    <link href="assets/css/main.css" rel="stylesheet">
+    <link href="assets/css/inputs.css" rel="stylesheet">
+    <link href="assets/css/nav.css" rel="stylesheet">
+    <link href="assets/css/list.css" rel="stylesheet">
+    <link href="assets/css/scrollbar.css" rel="stylesheet">
+    <link href="assets/css/popups.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="assets/css/fonts.min.css">
+    <link href="assets/css/fonts.min.css" rel="stylesheet">
 
-    <link rel="stylesheet" href="assets/fontawesome/css/all.min.css">
+    <link href="assets/fontawesome/css/all.min.css" rel="stylesheet">
     <script src="assets/js/jquery-3.7.1.min.js"></script>
 </head>
 <body class="col">
 <nav class="row center vertical">
-    <div id="hero" class="row">
-        <img src="assets/images/icon.svg" alt="">
+    <div class="row" id="hero">
+        <img alt="" src="assets/images/icon.svg">
         <div class="title col">
             <h1></h1>
             <h3 style="display: none;"></h3>
             <button style="display: none;">Back</button>
         </div>
     </div>
-    <div id="search-area" class="row">
+    <div class="row" id="search-area">
         <div class="floating-input">
-            <input type="search" id="search" placeholder="Search for a product" autocomplete="off">
+            <input autocomplete="off" id="search" placeholder="Search for a product" type="search">
             <label for="search">search</label>
         </div>
-        <button id="voice-search-button" title="Voice Search"><img src="assets/images/icons/microphone.svg" alt=""></button>
-        <button title="Show filters" style="display: none"><img src="assets/images/icons/filters.svg" alt=""></button>
+        <button id="voice-search-button" title="Voice Search"><img alt="" src="assets/images/icons/microphone.svg"></button>
+        <button style="display: none" title="Show filters"><img alt="" src="assets/images/icons/filters.svg"></button>
     </div>
-    <div id="actions-area" class="row">
-        <button id="new-button" title="Add new product" class="primary" authorized-access><img src="assets/images/icons/add.svg" alt=""></button>
-        <button id="edit-button" title="Open database settings" class="primary" authorized-access><img src="assets/images/icons/edit.svg" alt=""></button>
-        <button id="export-button" title="Export database as CSV"><i class="fa fa-cloud-download"></i></button>
+    <div class="row" id="actions-area">
+        <button authorized-access class="primary" id="new-button" title="Add new product"><img alt="" src="assets/images/icons/add.svg"></button>
+        <button authorized-access class="primary" id="edit-button" title="Open database settings"><img alt="" src="assets/images/icons/edit.svg"></button>
+        <button authorized-access id="export-button" title="Export database as CSV"><i class="fa fa-cloud-download"></i></button>
         <!--        <button id="settings-button" title="Open Settings"><i class="fa fa-gear"></i></button>-->
-        <button id="login-button"><img src="" alt=""></button>
+        <button id="login-button"><img alt="" src=""></button>
     </div>
 </nav>
 
