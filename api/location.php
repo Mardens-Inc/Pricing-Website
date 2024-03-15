@@ -35,18 +35,6 @@ $app->get("/", function ($request, $response, $args) {
     return $response->withHeader("Content-Type", "application/json")->withJson($result);
 });
 
-$app->get("/history", function ($request, $response, $args) {
-    $loc = new Location($args["id"]);
-    try {
-        $result = $loc->history();
-        if (!$result["success"]) return $response->withStatus(400)->withJson($result);
-        return $response->withJson($result);
-    } catch (Exception $e) {
-        return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
-    }
-});
-
-
 $app->get("/export", function ($request, $response, $args) {
     $loc = new Location($args["id"]);
 
