@@ -1,8 +1,6 @@
 <style>
     #history-list {
         .list-item {
-            position: relative;
-
             &[type="added"] {
                 color: var(--primary);
             }
@@ -19,99 +17,72 @@
                 font-size: 1.5rem;
                 margin-right: 1rem;
             }
-
-            .view-history:focus ~ .history-comparison {
-                display: unset;
-            }
-
-            .history-comparison {
-                display: none;
-                width: calc(82% - 4rem);
-                padding: 1rem 2rem;
-                position: absolute;
-                left: 42%;
-                right: 0;
-                transform: translateX(-50%);
-                background-color: #383636;
-                z-index: 1;
-                border-radius: 5px;
-                text-align: start;
-                color: white;
-                box-shadow: 1px 0 8px 0 black;
-
-                &.active {
-                    display: unset;
-                }
-
-                div {
-                    width: 100%;
-                    margin: 0.5rem 0;
-                    display: flex;
-                    justify-content: start;
-                    align-items: center;
-
-                    .content {
-                        width: 65%;
-                        margin-left: auto;
-                        display: flex;
-                        align-items: center;
-                        text-align: start;
-
-                        .old {
-                            color: #ff6b6b;
-                            --width: 45px;
-                            width: var(--width);
-                            max-width: var(--width);
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                        }
-
-                        .new {
-                            color: #6bff6b;
-                            --width: 147px;
-                            width: var(--width);
-                            max-width: var(--width);
-                            overflow: hidden;
-                            text-overflow: ellipsis;
-                        }
-
-                        i {
-                            width: 100px;
-                            text-align: center;
-                        }
-                    }
-                }
-
-            }
-
-        }
-
-        .list-item:last-child {
-            border-bottom: none;
-
-            .history-comparison {
-                top: 0;
-                transform: translateX(-50%) translateY(-56%);
-            }
         }
     }
 
+    #extended-history-view {
+        padding: 1rem 2rem;
+        background-color: #383636;
+        border-radius: 5px;
+        text-align: start;
+        color: white;
+        overflow: scroll;
+        /*box-shadow: 0 0 10px 0 rgba(0, 0, 0, .5);*/
+        margin-inline: 2rem;
+        width: 50%;
+        min-width: 400px;
+        max-height: calc(100vh - 12rem);
+
+        div {
+            width: 100%;
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: start;
+            align-items: center;
+
+            .content {
+                width: 65%;
+                margin-left: auto;
+                display: flex;
+                align-items: center;
+                text-align: start;
+
+                .old {
+                    color: #ff6b6b;
+                    --width: 45px;
+                    width: var(--width);
+                    max-width: var(--width);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .new {
+                    color: #6bff6b;
+                    --width: 147px;
+                    width: var(--width);
+                    max-width: var(--width);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                i {
+                    width: 100px;
+                    text-align: center;
+                }
+            }
+        }
+    }
 </style>
 
 
 <div class="col">
     <h1>History</h1>
-    <div id="history-list" class="list col">
+    <div class="row">
+        <div id="history-list" class="list col">
 
-        <div class="list-item center vertical fill" type="added">
-            <div>Added</div>
-            <div>Drew Chase</div>
-            <div>12:16:22 PM - 03/12/2024</div>
-            <div>
-                <button title="View changed data"><i class="fa fa-eye"></i></button>
-            </div>
         </div>
-
+        <div id="extended-history-view" style="display: none">
+        </div>
     </div>
 </div>
 
@@ -120,27 +91,13 @@
     $(document).on('loadPopup', (element, data) => {
         const historyElement = $("#history-list");
         historyElement.empty();
+        console.log(data)
         /**
          * @type {RecordHistory[]}
          */
         data = data.data.history.sort((a, b) => new Date(b.date) - new Date(a.date));
         for (let i = 0; i < data.length; i++) {
             const item = data[i];
-            let difference = ' ';
-            const appendDifference = (key, prev, curr) => {
-                difference += `<div>${key}: <div class="content"><span class="old">${prev !== undefined ? prev : '?'}</span> <i class="fa-solid fa-arrow-right"></i> <span class="new">${curr}</span></div></div>`;
-            };
-
-            for (const key in item.data) {
-                if (item.data.hasOwnProperty(key)) {
-                    const previous = i !== data.length - 1 ? data[i + 1] : null;
-                    const prev = previous && previous.data[key];
-                    const curr = item.data[key];
-                    if (prev !== curr || i === data.length - 1) {
-                        appendDifference(key, prev, curr);
-                    }
-                }
-            }
 
             const icon = item.action.toLowerCase() === 'added' ? 'fa-plus-circle' : item.action.toLowerCase() === 'updated' ? 'fa-square-pen' : 'fa-ban';
 
@@ -151,11 +108,55 @@
                     <div class="fill date">${new Date(item.date).toLocaleString()}</div>
                     <div>
                         <button class="view-history" title="View changed data"><i class="fa fa-eye"></i></button>
-                        <div class="history-comparison">${difference}</div>
                     </div>
                 </div>
 `);
+            $(html).on('click', '.view-history', () => {
+                // console.log(item)
+                if (item["id"] !== undefined && item["id"] !== null) {
+                    const filteredItems = data.filter(x => x.id === item.id);
+                    const indexOfSelectedItem = filteredItems.findIndex(x => x.data === item.data);
+                    viewDetailedHistory(filteredItems, indexOfSelectedItem);
+                } else {
+                    viewDetailedHistory(data, i);
+                }
+            });
             historyElement.append(html);
+        }
+
+        function viewDetailedHistory(items, selectedItemIndex) {
+            console.log(selectedItemIndex)
+            console.log(items)
+            let difference = ' ';
+            const appendDifference = (key, prev, curr) => {
+                difference += `<div>${key}: <div class="content"><span class="old">${prev !== undefined && prev !== null ? prev : '?'}</span> <i class="fa-solid fa-arrow-right"></i> <span class="new">${curr}</span></div></div>`;
+            };
+
+            // calculated the difference between the selected item in the items array and the next item in the array
+            const item = items[selectedItemIndex];
+            for (const key in item.data) {
+                if (item.data.hasOwnProperty(key)) {
+                    const previous = selectedItemIndex !== items.length - 1 ? items[selectedItemIndex + 1] : null;
+                    const prev = previous && previous.data[key];
+                    const curr = item.data[key];
+                    if (prev !== curr || selectedItemIndex === items.length - 1) {
+                        appendDifference(key, prev, curr);
+                    }
+                }
+            }
+
+            // for (const key in item.data) {
+            //     if (item.data.hasOwnProperty(key)) {
+            //         const previous = i !== data.length - 1 ? data[i + 1] : null;
+            //         const prev = previous && previous.data[key];
+            //         const curr = item.data[key];
+            //         if (prev !== curr || i === data.length - 1) {
+            //             appendDifference(key, prev, curr);
+            //         }
+            //     }
+            // }
+
+            $("#extended-history-view").css('display', '').html(`<h2>Changed Data</h2>${difference}`);
         }
 
         $(document).trigger('load')
