@@ -1,6 +1,6 @@
 import auth from "./authentication.js";
 import {startLoading, stopLoading} from "./loading.js";
-import {alert} from "./popups.js";
+import {alert, openPopup} from "./popups.js";
 
 /**
  * Represents a directory list.
@@ -166,6 +166,30 @@ export default class DirectoryList {
             // Attach an event listener to the more options button that opens a dropdown menu
             moreButton.on('click', (e) => {
                 openDropdown(moreButton, {
+                    "View History": async () => {
+                        startLoading({fullscreen: true, message: "Loading history"})
+                        try {
+                            const history = await $.ajax({url: `${baseURL}/api/location/${item["id"]}/history`, method: "GET", headers: {"Accept": "application/json"}});
+                            if (!history["success"]) {
+                                stopLoading();
+                                alert("Unable to load history");
+                                return;
+                            }
+
+                            if (history["history"].length === 0) {
+                                stopLoading();
+                                alert("No history found");
+                                return;
+                            }
+
+                            await openPopup("history", {history: history["history"]});
+                        } catch (e) {
+                            stopLoading();
+                            alert("Unable to load history");
+                            console.error(e)
+                        }
+                        stopLoading();
+                    },
                     "Edit": () => {
                         $(this).trigger("loadEdit", [item["id"]]);
                     },
