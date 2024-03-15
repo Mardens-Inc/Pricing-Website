@@ -53,7 +53,12 @@ class History
         } catch (Exception $e) {
             throw new Exception("Unable to execute sql statement: " . $e->getMessage());
         }
-        return $result->fetch_all(MYSQLI_ASSOC);
+
+        return array_map(function ($item) {
+            $item["id"] = $this->hashids->encode($item["id"]);
+            $item["data"] = json_decode($item["data"], true);
+            return $item;
+        }, $result->fetch_all(MYSQLI_ASSOC));
     }
 
     /**
