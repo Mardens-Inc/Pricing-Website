@@ -163,14 +163,14 @@ class Locations
 
             foreach ($columns as $column) {
                 if ($column == "id" || $column == "date") continue;
-                $tableItems .= ", `$column` varchar(1024) DEFAULT NULL";
+                $tableItems .= ", `$column` TEXT DEFAULT NULL";
             }
 
             $sql = "CREATE TABLE `$id` (`id` int(11) NOT NULL AUTO_INCREMENT$tableItems,
-                                        `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, `history` json NOT NULL,PRIMARY KEY (`id`),
+                                        `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                         `last_modified_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)
                     ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
-            // die($sql);
+
             $result = $this->connection->query($sql);
 
             if (!$result) {
