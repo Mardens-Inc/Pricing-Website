@@ -31,8 +31,6 @@ class Location
         $failure = 0;
         try {
             foreach ($json as $item) {
-                if (isset($item["history"]) && is_array($item["history"]))
-                    $item["history"] = json_encode($item["history"]);
                 $fields = array_keys($item);
                 $placeholders = str_repeat("?,", count($fields) - 1) . "?";
                 $sql = "INSERT INTO `$this->id` (`" . implode("`,`", $fields) . "`) VALUES ($placeholders)";
@@ -78,23 +76,22 @@ class Location
             return ["success" => false, "error" => "Invalid Item ID"];
         }
         $itemId = $itemId[0];
-        $json["history"] = json_encode($json["history"]);
 
         unset($json["id"]);
 
-        $sql = "UPDATE `$this->id` SET ";
+        $kvp = "";
         $keys = array_keys($json);
         for ($i = 0; $i < count($keys); $i++) {
             $key = $keys[$i];
             $value = $json[$key];
             $value = trim($value);
             $value = mysqli_real_escape_string($this->connection, $value);
-            $sql .= "`$key` = '$value', ";
+            $kvp .= "`$key` = '$value', ";
         }
 
-        $sql = rtrim($sql, ", ");
+        $kvp = rtrim($kvp, ", ");
 
-        $sql .= " WHERE id = $itemId LIMIT 1";
+        $sql = "UPDATE `$this->id` SET $kvp WHERE id = $itemId LIMIT 1";
 
         return ["success" => $this->connection->query($sql), "id" => $this->hashids->encode($itemId)];
 
@@ -121,7 +118,6 @@ class Location
             }
             $result = $result->fetch_assoc();
             $result["id"] = $this->hashids->encode($result["id"]);
-            $result["history"] = json_decode($result["history"], true);
             return $result;
         } catch (Exception $e) {
             return ["success" => false, "error" => $e->getMessage()];
@@ -178,7 +174,6 @@ class Location
             $locations = array();
             while ($row = $result->fetch_assoc()) {
                 $row["id"] = $this->hashids->encode($row["id"]);
-                $row["history"] = json_decode($row["history"], true);
                 $locations[] = $row;
             }
 
@@ -487,25 +482,21 @@ class Location
 
         $locations = array();
         while ($row = $result->fetch_assoc()) {
-            // remove id, date, and history columns
+            // remove id and date columns
             if (isset($row["id"]))
                 unset($row["id"]);
             if (isset($row["date"]))
                 unset($row["date"]);
-            if (isset($row["history"]))
-                unset($row["history"]);
             $locations[] = $row;
         }
 
         $csv = "";
         $columns = array_keys($locations[0]);
-        // remove id, date, and history columns
+        // remove id and date columns
         if (isset($columns["id"]))
             unset($columns["id"]);
         if (isset($columns["date"]))
             unset($columns["date"]);
-        if (isset($columns["history"]))
-            unset($columns["history"]);
 
 
         $csv .= implode(",", $columns) . "\n";
@@ -540,7 +531,7 @@ class Location
             $cols .= "`$column`, ";
         }
         $cols = rtrim($cols, ", ");
-        $sql = "INSERT INTO `$this->id` ($cols, history) VALUES (" . str_repeat('?,', count($columns) - 1) . "?, ?)";
+        $sql = "INSERT INTO `$this->id` ($cols) VALUES (" . str_repeat('?,', count($columns) - 1) . "?)";
         try {
             $stmt = $this->connection->prepare($sql);
         } catch (Exception $e) {
@@ -549,9 +540,6 @@ class Location
         for ($i = 1; $i < count($csv); $i++) {
             try {
                 $row = str_getcsv($csv[$i]);
-                $date = date("Y-m-d H:i:s");
-                $currentRow = json_encode($row);
-                $row[] = "[{\"user\": \"System\", \"action\": \"Added\", \"date\": \"$date\", \"data\": $currentRow}]";
                 $stmt->bind_param(str_repeat('s', count($row)), ...$row);
                 $result = $stmt->execute();
                 if (!$result) {
@@ -566,40 +554,4 @@ class Location
         return ["success" => true, "inserted" => count($csv) - 1];
     }
 
-    /**
-     * Retrieve the history data from the specified table.
-     *
-     * @return array An array with a success status and the history data.
-     *               - For a successful retrieval, it returns ["success" => true, "history" => $history].
-     *                 - "success" (bool): The status of the query execution.
-     *                 - "history" (array): The retrieved history data from the table.
-     *               - If the query execution fails, it returns ["success" => false, "error" => $errorMessage].
-     *                 - "success" (bool): The status of the query execution.
-     *                 - "error" (string): The error message indicating the failure to send the query to the database.
-     */
-    public function history(): array
-    {
-        try {
-            $sql = "SELECT id,history FROM `$this->id` ORDER BY `last_modified_date` DESC limit 1000";
-            $result = $this->connection->query($sql);
-            if (!$result) {
-                return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
-            }
-            $history = [];
-            $results = $result->fetch_all();
-            foreach ($results as $rows) {
-                $id = $rows[0];
-                $row = json_decode($rows[1], true);
-                foreach ($row as $key => $value) {
-                    $row[$key]["id"] = $this->hashids->encode($id);
-                    $history[] = $row[$key];
-                }
-
-            }
-
-            return ["success" => true, "history" => $history];
-        } catch (Exception $e) {
-            return ["success" => false, "error" => $e->getMessage()];
-        }
-    }
 }
