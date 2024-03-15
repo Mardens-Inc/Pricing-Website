@@ -1,6 +1,10 @@
 #options-form {
     max-width: calc(100% - 2rem);
 
+    #action-button-row {
+        position: fixed;
+        bottom: 1rem;
+    }
 
     .list {
         background-color: #3D3D3D;
