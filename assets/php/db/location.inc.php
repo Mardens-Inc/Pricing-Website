@@ -25,10 +25,13 @@ class Location
      * @param array $json The JSON data to add to the database
      * @return array An array containing the ID of the newly inserted location and whether the operation was successful
      */
-    public function add(array $json): array
+    public function add(array $json, string $user = "system"): array
     {
+        require_once "history.inc.php";
+        $history = new History();
         $success = 0;
         $failure = 0;
+        $inserted_ids = [];
         try {
             foreach ($json as $item) {
                 $fields = array_keys($item);
@@ -49,28 +52,38 @@ class Location
                         $failure++;
                         return ["error" => $stmt->error, "success" => $success, "failure" => $failure, "sql" => $sql];
                     }
+                    $id = $this->connection->insert_id;
+                    $inserted_ids[] = $this->hashids->encode($id);
+                    $history->add_history($this->id, $id, ActionType::CREATE, $user, $json);
                     $success++;
                 } catch (Exception $e) {
                     $failure++;
                     return ["error" => $e->getMessage(), "success" => $success, "failure" => $failure, "sql" => $sql];
                 }
                 $stmt->close();
+
+
             }
         } catch (Exception $e) {
             return ["error" => $e->getMessage(), "success" => $success, "failure" => $failure];
         }
-        return ["id" => $this->hashids->encode($this->connection->insert_id), "success" => $success, "failure" => $failure];
+        return ["ids" => $inserted_ids, "success" => $success, "failure" => $failure];
     }
 
 
     /**
-     * Edit a location in the database
-     * @param array $json The JSON data to edit in the database
-     * @return array An array containing the ID of the newly inserted location and whether the operation was successful
+     * Edit an item in the database.
+     *
+     * @param string $itemId The ID of the item to edit.
+     * @param array $json The updated data for the item.
+     * @param string $user The user who is making the edit. Default value is "system".
+     * @return array An array with a success status and the ID of the edited item.
+     *               - If the edit is successful, returns ["success" => true, "id" => "<encoded_item_id>"].
+     *               - If the item ID is invalid, returns ["success" => false, "error" => "Invalid Item ID"].
+     *               - If the edit fails, returns ["success" => false, "error" => "<error_message>"].
      */
-    public function edit(array $json): array
+    public function edit(string $itemId, array $json, string $user = "system"): array
     {
-        $itemId = $json["id"];
         $itemId = $this->hashids->decode($itemId);
         if (empty($itemId)) {
             return ["success" => false, "error" => "Invalid Item ID"];
@@ -92,6 +105,14 @@ class Location
         $kvp = rtrim($kvp, ", ");
 
         $sql = "UPDATE `$this->id` SET $kvp WHERE id = $itemId LIMIT 1";
+
+        try {
+            require_once "history.inc.php";
+            $history = new History();
+            $history->add_history($this->id, $itemId, ActionType::UPDATE, $user, $json);
+        } catch (Exception $e) {
+            return ["success" => false, "error" => $e->getMessage()];
+        }
 
         return ["success" => $this->connection->query($sql), "id" => $this->hashids->encode($itemId)];
 
@@ -451,7 +472,7 @@ class Location
      * Delete a location price from the database
      * @param string $item The ID of the location to delete
      */
-    public function delete(string $item): array
+    public function delete(string $item, string $user): array
     {
         $item = $this->hashids->decode($item)[0];
         $sql = "DELETE FROM `$this->id` WHERE id = $item LIMIT 1";
@@ -459,6 +480,14 @@ class Location
         if (!$result) {
             return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
         }
+
+        require_once "history.inc.php";
+        $history = new History();
+        try {
+            $history->add_history($this->id, $item, ActionType::DELETE, $user, []);
+        } catch (Exception) {
+        }
+
         return ["success" => true, "id" => $this->id];
     }
 
@@ -528,6 +557,9 @@ class Location
         $columns = str_getcsv($csv[0]);
         $cols = "";
         foreach ($columns as $column) {
+            $column = rtrim($column);
+            $column = ltrim($column);
+            $column = mysqli_real_escape_string($this->connection, $column);
             $cols .= "`$column`, ";
         }
         $cols = rtrim($cols, ", ");
