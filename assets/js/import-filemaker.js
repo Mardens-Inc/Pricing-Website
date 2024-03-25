@@ -1,6 +1,6 @@
 import Filemaker from "https://cdn.jsdelivr.net/gh/Mardens-Inc/Filemaker-API@8b2058fa149e11278487d0cadd3d2b33f37691e3/js/Filemaker.js";
-import auth from "./authentication.js";
 import {startLoading, stopLoading, updateLoadingOptions} from "./loading.js";
+import {addRecord} from "./location.js";
 
 const filemaker = new Filemaker("https://lib.mardens.com/fmutil", "admin", "19MRCC77!");
 
@@ -288,29 +288,22 @@ async function push() {
                             delete records[key];
                         }
                     }
-                    records["history"] = [{"user": auth.getUserProfile(), "action": "Added", "date": new Date().toISOString(), "data": data}]
                     return records;
                 }
-            ) // map the records to the fields
-        const json = JSON.stringify(records); // convert the records to json
+            )
 
         try {
             // upload the data to the server
-            await $.ajax({
-                url: `${baseURL}/api/location/${window.localStorage.getItem("loadedDatabase")}/`,
-                method: "POST",
-                data: json,
-                contentType: "application/json",
-                headers: {accept: "application/json"}
-            });
+            await addRecord(records);
         } catch (e) {
             console.log(e)
+            clearInterval(countDown); // clear the countdown interval
+
             // if an error occurs, update the loading message and return
             updateLoadingOptions({
                 message: `An error has occurred while uploading data from filemaker.<br>Please contact support.`,
                 fullscreen: true,
             })
-            clearInterval(countDown);
 
             return;
         }
@@ -327,6 +320,8 @@ async function push() {
         if (i < 2) calculateETA();
     }
 
+
+    clearInterval(countDown); // clear the countdown interval
     stopLoading(); // stop the loading screen
     window.location.reload(); // reload the page
 
