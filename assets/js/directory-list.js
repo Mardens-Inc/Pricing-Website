@@ -1,4 +1,5 @@
 import auth from "./authentication.js";
+import {getHistory} from "./history.js";
 import {startLoading, stopLoading} from "./loading.js";
 import {alert, openPopup} from "./popups.js";
 
@@ -49,7 +50,7 @@ export default class DirectoryList {
      * Retrieves a list of items from the API based on an optional query.
      *
      * @param {string} query - Optional query parameter to filter the items.
-     * @returns {Promise<Array>} - A promise that resolves to an array of items.
+     * @returns {Promise<Object>} - A promise that resolves to an array of items.
      */
     async getListItems(query = "") {
 
@@ -69,7 +70,9 @@ export default class DirectoryList {
         const url = `${baseURL}/api/locations/all`;
 
         try {
-            // Attempt to fetch data from the API using a GET request
+            /** Attempt to fetch data from the API using a GET request
+             * @type {Object} - The list of items retrieved from the server
+             * */
             let newList = await $.ajax({url: url, method: "GET", headers: {"Accept": "application/json"}});
 
             // If a query parameter is provided, filter the list items
@@ -144,9 +147,11 @@ export default class DirectoryList {
     buildListHTML(items) {
         // Start with a clean list
         this.list.html("");
+        console.log(items)
         items.forEach((item) => {
             // Create elements for each part of a list item
             const list = $(`<div class="list-item"></div>`);
+            if (item.options.hasOwnProperty("from_filemaker")) list.attr('filemaker', 'true');
             const clickableArea = $(`<div class="fill"></div>`);
             const img = $(`<img src="${item["image"] === "" ? "/assets/images/icon.png" : item["image"]}" alt="">`);
             const title = $(`<span class="title">${item["name"]}</span>`);
@@ -169,20 +174,8 @@ export default class DirectoryList {
                     "View History": async () => {
                         startLoading({fullscreen: true, message: "Loading history"})
                         try {
-                            const history = await $.ajax({url: `${baseURL}/api/location/${item["id"]}/history`, method: "GET", headers: {"Accept": "application/json"}});
-                            if (!history["success"]) {
-                                stopLoading();
-                                alert("Unable to load history");
-                                return;
-                            }
-
-                            if (history["history"].length === 0) {
-                                stopLoading();
-                                alert("No history found");
-                                return;
-                            }
-
-                            await openPopup("history", {history: history["history"]});
+                            const history = await getHistory(item["id"]);
+                            await openPopup("history", {history});
                         } catch (e) {
                             stopLoading();
                             alert("Unable to load history");
