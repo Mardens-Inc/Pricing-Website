@@ -3,12 +3,15 @@
  *
  * @param {string} name - The name of the popup.
  * @param {Object} [data] - Optional data for the popup.
+ * @param {function} onclose - Optional callback function to be executed when the popup is closed.
  * @return {Promise<JQuery<HTMLElement>|HTMLElement>} - A promise that is resolved when the popup is opened.
  */
-async function openPopup(name, data = {}) {
+async function openPopup(name, data = {}, onclose = () => {
+}) {
     const html = await $.get(`assets/popups/${name}.html`);
     name = name.replace(/[^a-zA-Z]/g, "");
     let popup = $(`<div class='popup' id="${name}-popup">`);
+    popup.on('close', onclose);
     const popupContent = $(`<div class='popup-content'>${html}</div>`);
     popupContent.append(`<button class="close"><i class="fa fa-close"></i></button>`)
     const bg = $('<div class="close popup-bg"></div>')
@@ -40,6 +43,7 @@ async function openPopup(name, data = {}) {
 function closePopup(name) {
     const popup = $(`#${name}-popup.popup.active`);
     popup.removeClass("active");
+    popup.trigger('close');
     setTimeout(() => {
         popup.remove();
     }, 300)
