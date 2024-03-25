@@ -168,7 +168,9 @@ class Locations
 
             $sql = "CREATE TABLE `$id` (`id` int(11) NOT NULL AUTO_INCREMENT$tableItems,
                                         `date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                                        `last_modified_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)
+                                        `last_modified_date` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                                        PRIMARY KEY (`id`)
+                     )
                     ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
             $result = $this->connection->query($sql);
