@@ -65,7 +65,7 @@ export default class DatabaseList {
         if (this.id !== null) {
             if (this.items.length === 0) {
                 this.importing = true;
-                if (options.length === 0) {
+                if (options.hasOwnProperty("from_filemaker")) {
                     if (auth.isLoggedIn && auth.getUserProfile().admin) {
                         this.list.append(await buildImportFilemakerForm())
                     } else {
@@ -76,7 +76,7 @@ export default class DatabaseList {
                     }
                 }
             } else {
-                if (options.length === 0)
+                if (options.hasOwnProperty("from_filemaker"))
                     await this.edit();
             }
         }
