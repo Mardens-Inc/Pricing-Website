@@ -84,6 +84,10 @@
 
         transition: background-color .1s;
 
+        &[filemaker="true"] {
+            opacity: .5;
+        }
+
         .title {
             margin-inline: 1rem;
             display: flex;
