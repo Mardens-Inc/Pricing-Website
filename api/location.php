@@ -151,9 +151,10 @@ $app->post("/search", function ($request, $response, $args) {
     return $response->withJson($result);
 });
 
-$app->post("/", function ($request, $response, $args) {
+$app->post("/[{record_id}/]", function ($request, $response, $args) {
     $loc = new Location($args["id"]);
     $body = $request->getBody();
+    $user = $request->getHeader("X-User") ?? "system";
     if ($request->getHeader("Content-Type")[0] == "text/csv") {
         try {
             $result = $loc->importCSV($body);
@@ -168,10 +169,10 @@ $app->post("/", function ($request, $response, $args) {
             return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
         }
         try {
-            if (isset($json["id"])) {
-                $result = $loc->edit($json);
+            if (isset($args["record_id"])) {
+                $result = $loc->edit($args["record_id"], $json, $user);
             } else {
-                $result = $loc->add($json);
+                $result = $loc->add($json, $user);
 
             }
             if (!$result["success"]) {
@@ -195,10 +196,11 @@ $app->post("/column/{column}", function ($request, $response, $args) {
     return $response->withJson($result);
 });
 
-$app->delete("/{record}", function ($request, $response, $args) {
+$app->delete("/{record}/", function ($request, $response, $args) {
     $loc = new Location($args["id"]);
     $record = $args["record"];
-    $result = $loc->delete($record);
+    $user = $request->getHeader("X-User") ?? "system";
+    $result = $loc->delete($record, $user);
     if ($result == []) {
         return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
     }
