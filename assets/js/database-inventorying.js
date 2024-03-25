@@ -1,5 +1,5 @@
-import auth from "./authentication.js";
 import {startLoading, stopLoading} from "./loading.js";
+import {addRecord, updateRecord} from "./location.js";
 import {alert, confirm} from "./popups.js";
 
 /**
@@ -206,7 +206,7 @@ async function buildInventoryingForm(allowAdditions, columns, addIfMissing, remo
                     }
                     data[primaryKey] = primaryInput.find("input").val();
                     data[quantityKey] = quantityValue;
-                    await add(data);
+                    await addRecord([data]);
                 }
             } else {
                 const data = {};
@@ -216,8 +216,15 @@ async function buildInventoryingForm(allowAdditions, columns, addIfMissing, remo
                 }
                 data[primaryKey] = primaryInput.find("input").val();
                 data[quantityKey] = quantityValue;
-                data["history"] = selectedItem["history"];
-                await update(selectedItem, data);
+
+                try {
+                    await updateRecord(data["id"], data);
+                } catch (e) {
+                    const response = e.responseJSON ?? e.responseText ?? e;
+                    console.error(e);
+                    console.log(response);
+                    alert(`Failed to add/update item, please contact IT/Support<br><p class="error">Error: ${response.error ?? "No error message was provided!"}</p>`, null, null);
+                }
 
             }
             $(document).trigger("search", primaryInput.find("input").val());
@@ -251,52 +258,6 @@ function processQuantityInput(quantity, edit, originalQuantity = null) {
     }
     if (edit || originalQuantity === null || isNaN(originalQuantity)) return value; // If the form is in edit mode or the original quantity is null, return the value.
     return value + originalQuantity; // Otherwise, return the sum of the value and the original quantity.
-}
-
-
-/**
- * Adds the specified data to the object.
- *
- * @param {object} data - The data to be added.
- * @return {Promise<void>} - A Promise that resolves when the update is complete.
- */
-async function add(data) {
-    const content = {...data}
-    data["history"] = [{"user": auth.getUserProfile(), "action": "Added", "date": new Date().toISOString(), "data": content}];
-    await update(null, [data]);
-}
-
-/**
- * Updates the location information by making an AJAX POST request to the server.
- *
- * @param {string|null} item - The ID of the item to be updated. Set to null if creating a new item.
- * @param {Object} data - The data to be updated or created.
- * @returns {Promise<void>} - A promise that resolves when the update is completed.
- */
-async function update(item, data) {
-    const url = `${baseURL}/api/location/${window.localStorage.getItem("loadedDatabase")}/`;
-    if (item !== null) data["id"] = item["id"];
-    else
-        // remove id from data if it's a new item
-        delete data["id"];
-    const content = {...data}
-    delete content["history"];
-    if (data["history"] === undefined || data["history"] === null) {
-        data["history"] = [{"user": auth.getUserProfile(), "action": "Added", "date": new Date().toISOString(), "data": content}]
-    } else {
-        data["history"].push({"user": auth.getUserProfile(), "action": "Updated", "date": new Date().toISOString(), "data": content});
-    }
-
-    console.log(data)
-    try {
-        const response = await $.ajax({url: url, method: "POST", data: JSON.stringify(data), contentType: "application/json", headers: {"Accept": "application/json"}});
-        console.log(response);
-    } catch (e) {
-        const response = e.responseJSON ?? e.responseText ?? e;
-        console.error(e);
-        console.log(response);
-        alert(`Failed to add/update item, please contact IT/Support<br><p class="error">Error: ${response.error ?? "No error message was provided!"}</p>`, null, null);
-    }
 }
 
 
