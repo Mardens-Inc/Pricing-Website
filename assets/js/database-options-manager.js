@@ -79,8 +79,16 @@ async function buildOptionsForm(id, onclose) {
         startLoading({fullscreen: true});
         csv = file.content;
         if (csv === null) return;
-        const newColumns = csv.split('\n')[0].split(',');
-        if (currentOptions.columns.length === 0) {
+        const newColumns = csv.split('\n')[0].split(',').map(c => {
+            let t = c;
+            t = t.trim().replace(/[^a-zA-Z0-9.\-+\s]/g, "");
+            // make sure the first character is a letter
+            if (!t[0].match(/[a-zA-Z]/)) {
+                t = "column" + t;
+            }
+            return t;
+        });
+        if (currentOptions.columns == null || currentOptions.columns.length === 0) {
             currentOptions.columns = newColumns;
             createColumnList(html);
             stopLoading();
@@ -198,7 +206,8 @@ function createColumnList(html) {
                     item.attributes = ["description", "search"];
                 }
                 if (c.toLowerCase().includes("upc") || c.toLowerCase().includes("scan") || c.toLowerCase().includes("asin")) {
-                    item.attributes = ["primary", "search"]
+                    if (currentOptions.options.columns.filter(c => c.attributes.includes("primary")).length === 0)
+                        item.attributes = ["primary", "search"]
                 }
             } catch (e) {
                 console.log(e)
@@ -236,6 +245,7 @@ function createColumnList(html) {
         ];
         for (const attribute of attributes) {
             let column = currentOptions.options.columns.find(c => c.name === listItem.attr("name"));
+            if (column === undefined || column === null) continue;
             if (column.attributes === undefined) column.attributes = [];
             const attributeHTML = $(`<i class="attribute ${attribute.icon} ${attribute.name} ${column.attributes.includes(attribute.name) ? "active" : ""}" title="${attribute.description}"></i>`);
             attributeHTML.on("click", (e) => {
