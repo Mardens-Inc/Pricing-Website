@@ -154,7 +154,7 @@ $app->post("/search", function ($request, $response, $args) {
 $app->post("/[{record_id}/]", function ($request, $response, $args) {
     $loc = new Location($args["id"]);
     $body = $request->getBody();
-    $user = $request->getHeader("X-User") ?? "system";
+    $user = $request->getHeader("X-User")[0] ?? "system";
     if ($request->getHeader("Content-Type")[0] == "text/csv") {
         try {
             $result = $loc->importCSV($body);
