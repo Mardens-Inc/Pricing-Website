@@ -12,7 +12,10 @@ async function addRecord(records) {
         method: "POST",
         data: JSON.stringify(records),
         contentType: "application/json",
-        headers: {accept: "application/json", "X-User": auth.getUserProfile().username},
+        headers: {
+            accept: "application/json",
+            "X-User": auth.getUserProfile().username
+        },
     });
 }
 
@@ -39,7 +42,10 @@ async function deleteRecord(id) {
     return $.ajax({
         url: `${baseURL}/api/location/${window.localStorage.getItem("loadedDatabase")}/${id}/`,
         method: "DELETE",
-        headers: {accept: "application/json", "X-User": auth.getUserProfile().username},
+        headers: {
+            accept: "application/json",
+            "X-User": auth.getUserProfile().username
+        },
     });
 }
 
@@ -56,7 +62,10 @@ async function updateRecord(id, records) {
         method: "POST",
         data: JSON.stringify(records),
         contentType: "application/json",
-        headers: {accept: "application/json", "X-User": auth.getUserProfile().username},
+        headers: {
+            accept: "application/json",
+            "X-User": auth.getUserProfile().username
+        },
     });
 }
 

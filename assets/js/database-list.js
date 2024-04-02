@@ -3,6 +3,7 @@ import {print} from "./crossplatform-utility.js";
 import {buildInventoryingForm} from "./database-inventorying.js";
 import {buildOptionsForm} from "./database-options-manager.js";
 import {download} from "./filesystem.js";
+import {getHistory} from "./history.js";
 import {buildImportFilemakerForm} from "./import-filemaker.js";
 import {startLoading, stopLoading} from "./loading.js";
 import {alert, confirm, openPopup} from "./popups.js";
@@ -109,7 +110,7 @@ export default class DatabaseList {
      */
     async search(query) {
         if (!this.importing) {
-            $("#search").val(query);
+            // $("#search").val(query);
             await this.loadView(query, true);
             $(document).trigger("load")
             return this.items;
@@ -186,7 +187,7 @@ export default class DatabaseList {
         const table = this.buildColumns();
         table.css('--columnSize', `${(1 / (this.options.columns.filter(i => i.visible).length + 1)) * 100}%`);
         const tbody = $("<tbody>");
-        this.items.forEach((item) => {
+        for (const item of this.items) {
             const tr = $(`<tr id='${item.id}' class='list-item'>`);
             let mp = null;
             let retail = null;
@@ -235,11 +236,13 @@ export default class DatabaseList {
                 mp: mp
             }));
 
+
             const showExtraButton = auth.isLoggedIn;
-            extraButton.on("click", () => {
+            extraButton.on("click", async () => {
+                const itemHistory = await getHistory(this.id, item.id);
                 openDropdown(extraButton, {
                     "View History": () => {
-                        openPopup("history", {history: item.history});
+                        openPopup("history", {history: itemHistory});
                     },
                     "Copy": () => {
                         navigator.clipboard.writeText(JSON.stringify(item, null, 2));
@@ -258,7 +261,7 @@ export default class DatabaseList {
                             stopLoading();
                         });
                     }
-                }, {"View History": item.history !== undefined && item.history.length > 0});
+                }, {"View History": itemHistory !== undefined && itemHistory.length > 0});
             });
             try {
                 if (this.options["allow-inventorying"]) {
@@ -285,7 +288,7 @@ export default class DatabaseList {
                 extra.append(extraButton);
             tr.append(extra);
             tbody.append(tr);
-        });
+        }
         this.list.empty();
         table.append(tbody);
         this.list.append(table);

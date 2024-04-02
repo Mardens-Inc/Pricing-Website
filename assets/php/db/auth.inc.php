@@ -15,7 +15,7 @@ class Authentication
     {
         // Connect to the database
         require_once $_SERVER["DOCUMENT_ROOT"] .  "/assets/php/connections.inc.php";
-        $this->connection = DB_Connect::connect();
+        $this->connection = Connection::connect();
 
         // Create a Hashids object to encode and decode IDs
         $this->hashids = new Hashids($_ENV["HASH_SALT"], 24);

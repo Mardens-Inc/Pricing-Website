@@ -56,6 +56,7 @@ $(directory).on("loadExternalView", async (event, id) => {
     editButton.css('display', "");
     exportButton.css('display', "");
     newButton.css('display', 'none');
+    $(document).trigger("finishedLoadingExternalView", [id]);
 });
 $(directory).on('loadEdit', async (event, id) => {
     database = new DatabaseList(id);

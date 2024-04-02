@@ -29,8 +29,9 @@ async function openPopup(name, data = {}, onclose = () => {
             closePopup(name);
         });
     }, 100)
-
-    $(document).trigger("loadPopup", {data})
+    setTimeout(() => {
+        $(document).trigger("loadPopup", {data})
+    }, 100)
 
     return popup;
 }

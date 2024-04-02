@@ -126,6 +126,7 @@
 
                 &.fa-grip-vertical {
                     cursor: grab;
+                    pointer-events: none;
                 }
 
                 &:hover {

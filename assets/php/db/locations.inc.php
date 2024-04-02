@@ -14,7 +14,7 @@ class Locations
     public function __construct()
     {
         require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/connections.inc.php";
-        $this->connection = DB_Connect::connect(); // Connect to locations database
+        $this->connection = Connection::connect(); // Connect to locations database
         $this->hashids = new Hashids($_ENV["HASH_SALT"], 10);
 
         // Create the locations table if it doesn't exist

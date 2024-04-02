@@ -3,10 +3,10 @@ import {alert} from "./popups.js";
 
 /**
  * @typedef {Object} RecordOptions
- * @property {number} limit - The number of records to return
- * @property {number} page - The page number to return
- * @property {string} sort - The field to sort by
- * @property {boolean} asc - Whether to sort in ascending order
+ * @property {number?} limit - The number of records to return
+ * @property {number?} page - The page number to return
+ * @property {string?} sort - The field to sort by
+ * @property {boolean?} asc - Whether to sort in ascending order
  */
 
 /**
@@ -16,7 +16,7 @@ import {alert} from "./popups.js";
  * @property {ActionType} action_type - The type of action that was performed
  * @property {string} user - The user that performed the action
  * @property {Object} data - The data that was affected by the action
- * @property {string} timestamp - The time the action was performed
+ * @property {Date} timestamp - The time the action was performed
  * @property {string} id - The id of the history record
  */
 
@@ -167,4 +167,4 @@ function parseJSONToHistoryRecord(json) {
 }
 
 
-export {getHistory, addHistory, ActionType}
+export {getHistory, addHistory, ActionType, parseJSONToHistoryRecord, getActionTypeString, getActionTypeFromString, getActionTypeFromInt}

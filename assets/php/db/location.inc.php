@@ -15,7 +15,7 @@ class Location
     public function __construct(string $id)
     {
         require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/connections.inc.php";
-        $this->connection = DB_Connect::connect(); // Connect to locations database
+        $this->connection = Connection::connect(); // Connect to locations database
         $this->hashids = new Hashids($_ENV["HASH_SALT"], 10);
         $this->id = $id;
     }
@@ -54,7 +54,9 @@ class Location
                     }
                     $id = $this->connection->insert_id;
                     $inserted_ids[] = $this->hashids->encode($id);
-                    $history->add_history($this->id, $id, ActionType::CREATE, $user, $json);
+                    if (count($json) <= 100) {
+                        $history->add_history($this->id, $id, ActionType::CREATE, $user, $json);
+                    }
                     $success++;
                 } catch (Exception $e) {
                     $failure++;
@@ -84,6 +86,7 @@ class Location
      */
     public function edit(string $itemId, array $json, string $user = "system"): array
     {
+        $id = $itemId;
         $itemId = $this->hashids->decode($itemId);
         if (empty($itemId)) {
             return ["success" => false, "error" => "Invalid Item ID"];
@@ -109,7 +112,7 @@ class Location
         try {
             require_once "history.inc.php";
             $history = new History();
-            $history->add_history($this->id, $itemId, ActionType::UPDATE, $user, $json);
+            $history->add_history($this->id, $id, ActionType::UPDATE, $user, $json);
         } catch (Exception $e) {
             return ["success" => false, "error" => $e->getMessage()];
         }

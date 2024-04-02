@@ -46,4 +46,31 @@ function print(data) {
 }
 
 
-export {print, isDedicatedClient}
+/**
+ * Returns the operating system based on the user agent.
+ *
+ * @returns {string} The operating system.
+ */
+const getOperatingSystem = () => {
+    const userAgent = navigator.userAgent || navigator.vendor;
+
+    if (/windows phone/i.test(userAgent)) return 'WindowsPhone';
+    if (/android/i.test(userAgent)) return 'Android';
+    if (/iPad|iPhone|iPod/.test(userAgent)) return 'IOS';
+    if (/Win32|Win64|wow32|wow64/.test(userAgent)) return 'Windows';
+    if (/Linux|X11/.test(userAgent)) return 'Linux';
+    if (/Mac|Intel/.test(userAgent)) return 'MacOS';
+
+    // Fallback to a desktop version if the OS is not identified
+    return 'Desktop';
+};
+
+/**
+ * The operating system of the user.
+ *
+ * @namespace window.os
+ */
+window.os = getOperatingSystem();
+
+
+export {print, isDedicatedClient, getOperatingSystem}

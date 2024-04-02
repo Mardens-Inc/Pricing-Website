@@ -204,6 +204,7 @@ async function push() {
     const count = await filemaker.getRecordCount();
     let currentProcessed = 0;
     let size = 1_000;
+    let ids = [];
 
     let itemsPerSecond = 0;
     let start = new Date().getTime();
@@ -263,7 +264,7 @@ async function push() {
 
     for (i = 0; i < count; i += size) {
         // get the records from filemaker
-        const records = (await filemaker.getRecords(size, i > count ? count : i))
+        let records = (await filemaker.getRecords(size, i > count ? count : i))
             .map(record => {
                     let records = record.fields
                     // remove keys that start with g_ (filemaker internal fields)
@@ -322,6 +323,7 @@ async function push() {
 
 
     clearInterval(countDown); // clear the countdown interval
+
     stopLoading(); // stop the loading screen
     window.location.reload(); // reload the page
 

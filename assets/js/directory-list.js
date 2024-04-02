@@ -169,12 +169,19 @@ export default class DirectoryList {
             })
 
             // Attach an event listener to the more options button that opens a dropdown menu
-            moreButton.on('click', (e) => {
+            moreButton.on('click', async () => {
+                // If it takes longer to load the history than 1 second, show a loading message
+                let waitNotifyTimeout = setTimeout(() => {
+                    startLoading({message: "Loading options"})
+                }, 1000)
+                const history = await getHistory(item["id"], "", {limit: 1});
+                stopLoading();
+                clearTimeout(waitNotifyTimeout);
                 openDropdown(moreButton, {
                     "View History": async () => {
                         startLoading({fullscreen: true, message: "Loading history"})
+                        const history = await getHistory(item["id"]);
                         try {
-                            const history = await getHistory(item["id"]);
                             await openPopup("history", {history});
                         } catch (e) {
                             stopLoading();
@@ -200,7 +207,7 @@ export default class DirectoryList {
                             stopLoading();
                         });
                     }
-                })
+                }, {"View History": history.length > 0})
             });
 
             // Attach an event listener to the list item itself that transitions to a new view when clicked

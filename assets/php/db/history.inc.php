@@ -17,7 +17,7 @@ class History
     function __construct()
     {
         require_once $_SERVER['DOCUMENT_ROOT'] . "/assets/php/connections.inc.php";
-        $this->conn = DB_Connect::connect();
+        $this->conn = Connection::connect();
         $this->hashids = new Hashids($_ENV["HASH_SALT"], 10);
 
         $sql = "CREATE TABLE IF NOT EXISTS history (
@@ -30,6 +30,24 @@ class History
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )";
         $this->conn->query($sql);
+    }
+
+    /**
+     * Maps the database items from the given result set.
+     *
+     * @param bool|mysqli_result $result The result set from the database query.
+     *
+     * @return array The mapped database items with hashed IDs, record IDs, and decoded data.
+     */
+    private function MapDatabaseItems(bool|mysqli_result $result): array
+    {
+        $results = $result->fetch_all(MYSQLI_ASSOC);
+        return array_map(function ($item) {
+            $item["id"] = $this->hashids->encode($item["id"]);
+            $item["record_id"] = $this->hashids->encode($item["record_id"]);
+            $item["data"] = json_decode($item["data"], true);
+            return $item;
+        }, $results);
     }
 
     /**
@@ -54,11 +72,7 @@ class History
             throw new Exception("Unable to execute sql statement: " . $e->getMessage());
         }
 
-        return array_map(function ($item) {
-            $item["id"] = $this->hashids->encode($item["id"]);
-            $item["data"] = json_decode($item["data"], true);
-            return $item;
-        }, $result->fetch_all(MYSQLI_ASSOC));
+        return $this->MapDatabaseItems($result);
     }
 
     /**
@@ -110,7 +124,7 @@ class History
         } catch (Exception $e) {
             throw new Exception("Unable to close statement: " . $e->getMessage());
         }
-        return $result->fetch_all(MYSQLI_ASSOC);
+        return $this->MapDatabaseItems($result);
     }
 
     /**
@@ -129,6 +143,7 @@ class History
     {
         $sortOrder = $asc ? "ASC" : "DESC";
         $offset = $page * $limit;
+
         try {
             $sql = "SELECT * FROM `history` WHERE location_id = ? AND record_id = ? ORDER BY $sort $sortOrder LIMIT $limit OFFSET $offset";
             $stmt = $this->conn->prepare($sql);
@@ -152,7 +167,7 @@ class History
             throw new Exception("Unable to get result: " . $e->getMessage());
         }
         $stmt->close();
-        return $result->fetch_all(MYSQLI_ASSOC);
+        return $this->MapDatabaseItems($result);
     }
 
     /**

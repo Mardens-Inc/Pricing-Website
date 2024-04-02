@@ -1,3 +1,4 @@
+import {ActionType, addHistory, getHistory} from "./history.js";
 import {startLoading, stopLoading} from "./loading.js";
 import {addRecord, updateRecord} from "./location.js";
 import {alert, confirm} from "./popups.js";
@@ -218,7 +219,15 @@ async function buildInventoryingForm(allowAdditions, columns, addIfMissing, remo
                 data[quantityKey] = quantityValue;
 
                 try {
-                    await updateRecord(data["id"], data);
+                    let history = await getHistory(window.localStorage.getItem("loadedDatabase"), selectedItem["id"]);
+                    if (history.length === 0) {
+                        let ogData = {...selectedItem};
+                        delete ogData["id"];
+                        delete ogData["date"];
+                        delete ogData["last_modified_date"];
+                        await addHistory(window.localStorage.getItem("loadedDatabase"), selectedItem["id"], ActionType.CREATE, ogData);
+                    }
+                    await updateRecord(selectedItem["id"], data);
                 } catch (e) {
                     const response = e.responseJSON ?? e.responseText ?? e;
                     console.error(e);
