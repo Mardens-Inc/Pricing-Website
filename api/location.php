@@ -39,7 +39,7 @@ $app->get("/export", function ($request, $response, $args) {
     $loc = new Location($args["id"]);
 
     try {
-        $result = $loc->export();
+        $result = @$loc->export();
     } catch (Exception $e) {
         return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
     }
@@ -94,10 +94,10 @@ $app->patch("/", function ($request, $response, $args) {
     }
     $loc = new Locations();
     $id = $args["id"];
-    $name = $json["name"];
-    $location = $json["location"];
-    $po = $json["po"];
-    $image = $json["image"];
+    $name = @$json["name"]??"";
+    $location = @$json["location"]??"";
+    $po = @$json["po"]??"";
+    $image = @$json["image"]??"";
     $options = json_encode($json["options"]);
     $result = $loc->editRecord($id, $name, $location, $po, $image, $options);
     if ($result == []) {
@@ -199,7 +199,7 @@ $app->post("/column/{column}", function ($request, $response, $args) {
 $app->delete("/{record}/", function ($request, $response, $args) {
     $loc = new Location($args["id"]);
     $record = $args["record"];
-    $user = $request->getHeader("X-User") ?? "system";
+    $user = $request->getHeader("X-User")[0] ?? "system";
     $result = $loc->delete($record, $user);
     if ($result == []) {
         return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
