@@ -536,8 +536,9 @@ class Location
         foreach ($locations as $location) {
             // replace any quotes or commas in the values with a space
             $location = array_map(function ($value) {
-                return str_replace(["\"", ","], " ", $value);
+                return $value != null ? str_replace(["\"", ","], " ", $value) : null;
             }, $location);
+            $location = array_filter($location);
 
             // wrap each value in quotes and separate with commas
             $csv .= implode("\",\"", $location) . "\"\n\"";
