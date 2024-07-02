@@ -590,4 +590,20 @@ class Location
         return ["success" => true, "inserted" => count($csv) - 1];
     }
 
+    public function unique_column_values(string $column): array
+    {
+        $sql = "SELECT DISTINCT `$column` FROM `$this->id`";
+        $result = $this->connection->query($sql);
+        if (!$result) {
+            return ["success" => false, "error" => "Failed to send query to database '$this->id'"];
+        }
+
+        $values = array();
+        while ($row = $result->fetch_assoc()) {
+            $values[] = $row[$column];
+        }
+
+        return ["success" => true, "values" => $values];
+    }
+
 }
