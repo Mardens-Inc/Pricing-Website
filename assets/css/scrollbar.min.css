@@ -1,1 +1,0 @@
-:root{--scrollbarBG:#C5C5C5;--thumbBG:#6A6A6A;--scrollbar-width:5px;scrollbar-gutter:stable}::-webkit-scrollbar{width:var(--scrollbar-width);height:var(--scrollbar-width)}::-webkit-scrollbar-track{background:0 0}::-webkit-scrollbar-thumb{background-color:var(--thumbBG);border-radius:20px;border:3px solid var(--scrollbarBG)}::-webkit-scrollbar-corner{background:0 0}
