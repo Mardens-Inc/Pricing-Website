@@ -1,6 +1,9 @@
 <?php
 
 use Slim\Factory\AppFactory;
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: *");
+header("Access-Control-Allow-Methods: GET, POST, DELETE, OPTIONS");
 
 require_once $_SERVER["DOCUMENT_ROOT"] . "/vendor/autoload.php";
 $app = AppFactory::create();
@@ -21,6 +24,16 @@ $app->get("/", function ($request, $response, $args)
                         "price" => "float"
                     ],
                     "name" => "Generic Percent Off",
+                    "description" => "Prints a price tag with a percent off"
+                ],
+                "/mp" => [
+                    "params" => [
+                        "department" => "string",
+                        "year" => "int",
+                        "mp" => "float",
+                        "price" => "float"
+                    ],
+                    "name" => "With Mardens Price",
                     "description" => "Prints a price tag with a percent off"
                 ],
                 "/amazon/white" => [
@@ -75,6 +88,54 @@ $app->get("/percent", function ($request, $response, $args)
         <p style='font-size: 8pt; font-weight: Bold; padding-left: 3px; padding-bottom: -5px; line-height: 6px; text-align: right;'>$year</p>
     </div>
 </div>
+<script>
+  try
+  {
+      window.print();
+  } catch (e)
+  {
+      console.error(e);
+  }
+  setTimeout(() => {
+      window.close();
+        }, 1000);
+</script>
+</body>
+");
+    return $response->withHeader("Content-Type", "text/html");
+});
+$app->get("/mp", function ($request, $response, $args)
+{
+    $params = $request->getQueryParams();
+    $department = @$params["department"] ?? "";
+    $year = @$params["year"] ?? "";
+    $price = number_format($params["price"], 2);
+    $mp = number_format($params["mp"], 2);
+
+    $response->getBody()->write("
+<body style='margin:0; font-size:5pt'>
+<div style='font-family: verdana,sans-serif;width: 110px; height: 78px; text-align: center; margin-left: 7px; margin-top: 2px;'>
+    <div style='font-size: 8pt; font-weight: Bold; padding-top: 6px; padding-left: 6px; padding-bottom: -7px; line-height: 4px; text-align: left;'>Dept: $department</div>
+    <p style='font-size: 8pt; font-weight: Bold; padding-left: 3px; padding-bottom: -5px; line-height: 6px; text-align: right;'>Retail Price</p>
+    <div style='font-size: 13pt; font-weight: Bold; padding-left: 3px; padding-bottom: 2px; line-height: 2px;'>$$price</div>
+    <p style='font-size: 8pt; font-weight: Bold; padding-left: 3px; padding-bottom: -5px; line-height: 6px; text-align: right;'>Marden's Price</p>
+    <div style='font-size: 13pt; font-weight: Bold; line-height: 2px;'> 
+        $$mp 
+        <p style='font-size: 8pt; font-weight: Bold; padding-left: 3px; padding-bottom: -5px; line-height: 6px; text-align: right;'>$year</p>
+    </div>
+</div>
+<script>
+  try
+  {
+      window.print();
+  } catch (e)
+  {
+      console.error(e);
+  }
+  setTimeout(() => {
+      window.close();
+        }, 1000);
+</script>
 </body>
 ");
     return $response->withHeader("Content-Type", "text/html");
@@ -88,16 +149,35 @@ $app->get("/amazon/white", function ($request, $response, $args)
     $year = @$params["year"] ?? "";
     $price = number_format($params["price"], 2);
 
+    if($department != "")
+    {
+        $department = "Dept: $department";
+    }
+
     $response->getBody()->write("
 <body style='margin:0; font-size:5pt'>
 <div style='font-family: verdana,sans-serif;width:110px; height: 73px; text-align: center; margin-left:0; margin-top: 0; overflow: hidden;'>
-    <div  style='font-size:8pt; font-weight: Bold; padding-top:6px; padding-left: 6px; padding-bottom: -7px; line-height: 4px; text-align: left;'>Dept: $department</div>
+    <div  style='font-size:8pt; font-weight: Bold; padding-top:6px; padding-left: 6px; padding-bottom: -7px; line-height: 4px; text-align: left;'>$department</div>
     <p  style='font-size: 8pt; font-weight: Bold; line-height: 9px;'>$label</p>
     <div style='font-size: 11pt; font-weight: Bold; line-height: 4px;'>
         $$price 
         <p class='LotNum' style='font-size:8pt; font-weight: Bold; line-height: 6px; text-align: right; padding-right: 5px;'>$year</p>
     </div>
 </div>
+
+<script>
+  try
+  {
+      window.print();
+  } catch (e)
+  {
+      console.error(e);
+  }
+  setTimeout(() => {
+      window.close();
+        }, 1000);
+</script>
+
 </body>
 ");
     return $response->withHeader("Content-Type", "text/html");
@@ -119,6 +199,18 @@ $app->get("/eyewear", function ($request, $response, $args)
         <div style='font-size: 13pt; font-weight: Bold; line-height: 2px;'>$$price</div>
     </div>
 </div>
+<script>
+  try
+  {
+      window.print();
+  } catch (e)
+  {
+      console.error(e);
+  }
+  setTimeout(() => {
+      window.close();
+        }, 1000);
+</script>
 </body>
 
 ");
@@ -138,6 +230,18 @@ $app->get("/sams", function ($request, $response, $args)
     <p style='font-size: 8pt; margin-bottom: 10px; font-weight: bold;'>Mardens Price</p>
     <div style='font-size: 16pt; font-weight: Bold; line-height: 2px;'>$$mp</div>
 </div>
+<script>
+  try
+  {
+      window.print();
+  } catch (e)
+  {
+      console.error(e);
+  }
+  setTimeout(() => {
+      window.close();
+        }, 1000);
+</script>
 </body>
 
 ");
