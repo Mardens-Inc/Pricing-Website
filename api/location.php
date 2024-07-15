@@ -13,12 +13,14 @@ require_once $_SERVER["DOCUMENT_ROOT"] . "/vendor/autoload.php";
 $app = AppFactory::create();
 $app->setBasePath("/api/location/{id}");
 
-$app->get("/", function ($request, $response, $args) {
+$app->get("/", function ($request, $response, $args)
+{
     require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/db/locations.inc.php";
     $loc = new Locations();
     $id = $args['id'];
     $result = $loc->byID($id);
-    if (isset($result["error"])) {
+    if (isset($result["error"]))
+    {
         return $response->withStatus(404)->withJson($result);
     }
     $result["image"] = @$loc->get_image($id)["image"] ?? "";
@@ -27,7 +29,8 @@ $app->get("/", function ($request, $response, $args) {
     $asc = $request->getQueryParams()["asc"] ?? false;
 
 
-    if (!$headingsOnly) {
+    if (!$headingsOnly)
+    {
         $loc = new Location($id);
         $result["results"] = @$loc->list(10, 0, $sort, $asc, "");
     }
@@ -35,12 +38,15 @@ $app->get("/", function ($request, $response, $args) {
     return $response->withHeader("Content-Type", "application/json")->withJson($result);
 });
 
-$app->get("/export", function ($request, $response, $args) {
+$app->get("/export", function ($request, $response, $args)
+{
     $loc = new Location($args["id"]);
 
-    try {
+    try
+    {
         $result = @$loc->export();
-    } catch (Exception $e) {
+    } catch (Exception $e)
+    {
         return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
     }
 
@@ -48,32 +54,46 @@ $app->get("/export", function ($request, $response, $args) {
     return $response->withHeader("Content-Type", "text/csv")->withHeader("Content-Disposition", "attachment; filename=export.csv");
 });
 
-$app->get("/{record}", function ($request, $response, $args) {
-    try {
+$app->get("/{record}", function ($request, $response, $args)
+{
+    try
+    {
         $loc = new Location($args["id"]);
         $record = $args["record"];
         $result = $loc->get($record);
-        if ($result == []) {
+        if ($result == [])
+        {
             return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
         }
         return $response->withJson($result);
-    } catch (Exception $e) {
+    } catch (Exception $e)
+    {
         return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
     }
 });
-$app->get('/columns', function ($request, $response, $args) {
+$app->get('/columns', function ($request, $response, $args)
+{
     $loc = new Location($args["id"]);
     $result = $loc->getColumns();
     return $response->withJson($result);
 });
-$app->post("/add/filemaker", function ($request, $response, $args) {
+$app->get('/columns/{column}', function ($request, $response, $args)
+{
+    $loc = new Location($args["id"]);
+    $result = $loc->unique_column_values($args["column"]);
+    return $response->withJson($result);
+});
+$app->post("/add/filemaker", function ($request, $response, $args)
+{
     $loc = new Location($args["id"]);
     $json = json_decode(file_get_contents("php://input"), true);
-    if (!$json || json_last_error_msg() != "No error") {
+    if (!$json || json_last_error_msg() != "No error")
+    {
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
     }
 
-    if (!isset($json["username"]) || !isset($json["password"]) || !isset($json["layout"]) || !isset($json["database"])) {
+    if (!isset($json["username"]) || !isset($json["password"]) || !isset($json["layout"]) || !isset($json["database"]))
+    {
         $missing = array_diff(["username", "password", "layout", "database"], array_keys($json));
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Missing required parameters", "missing" => $missing]);
     }
@@ -86,47 +106,58 @@ $app->post("/add/filemaker", function ($request, $response, $args) {
     return $response->withJson($result);
 });
 
-$app->patch("/", function ($request, $response, $args) {
+$app->patch("/", function ($request, $response, $args)
+{
     require_once $_SERVER["DOCUMENT_ROOT"] . "/assets/php/db/locations.inc.php";
     $json = json_decode(file_get_contents("php://input"), true);
-    if (json_last_error_msg() != "No error") {
+    if (json_last_error_msg() != "No error")
+    {
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
     }
     $loc = new Locations();
     $id = $args["id"];
-    $name = @$json["name"]??"";
-    $location = @$json["location"]??"";
-    $po = @$json["po"]??"";
-    $image = @$json["image"]??"";
+    $name = @$json["name"] ?? "";
+    $location = @$json["location"] ?? "";
+    $po = @$json["po"] ?? "";
+    $image = @$json["image"] ?? "";
     $options = json_encode($json["options"]);
     $result = $loc->editRecord($id, $name, $location, $po, $image, $options);
-    if ($result == []) {
+    if ($result == [])
+    {
         return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
     }
-    if (!$result["success"]) {
+    if (!$result["success"])
+    {
         return $response->withStatus(400)->withJson($result);
     }
     return $response->withJson($result);
 });
-$app->patch("/columns/{column}", function ($request, $response, $args) {
+$app->patch("/columns/{column}", function ($request, $response, $args)
+{
     $json = json_decode(file_get_contents("php://input"), true);
-    if (!$json || json_last_error_msg() != "No error") {
+    if (!$json || json_last_error_msg() != "No error")
+    {
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
     }
-    try {
+    try
+    {
         $loc = new Location($args["id"]);
         $result = $loc->renameColumn($args["column"], $json["name"]);
-        if (!$result["success"]) {
+        if (!$result["success"])
+        {
             return $response->withStatus(400)->withJson($result);
         }
         return $response->withJson($result);
-    } catch (Exception $e) {
+    } catch (Exception $e)
+    {
         return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
     }
 });
-$app->patch("/columns", function ($request, $response, $args) {
+$app->patch("/columns", function ($request, $response, $args)
+{
     $json = json_decode(file_get_contents("php://input"), true);
-    if (!$json || json_last_error_msg() != "No error") {
+    if (!$json || json_last_error_msg() != "No error")
+    {
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
     }
     $loc = new Location($args["id"]);
@@ -135,9 +166,11 @@ $app->patch("/columns", function ($request, $response, $args) {
 });
 
 
-$app->post("/search", function ($request, $response, $args) {
+$app->post("/search", function ($request, $response, $args)
+{
     $json = json_decode(file_get_contents("php://input"), true);
-    if (!$json || json_last_error_msg() != "No error") {
+    if (!$json || json_last_error_msg() != "No error")
+    {
         return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
     }
     $loc = new Location($args["id"]);
@@ -151,57 +184,73 @@ $app->post("/search", function ($request, $response, $args) {
     return $response->withJson($result);
 });
 
-$app->post("/[{record_id}/]", function ($request, $response, $args) {
+$app->post("/[{record_id}/]", function ($request, $response, $args)
+{
     $loc = new Location($args["id"]);
     $body = $request->getBody();
     $user = $request->getHeader("X-User")[0] ?? "system";
-    if ($request->getHeader("Content-Type")[0] == "text/csv") {
-        try {
+    if ($request->getHeader("Content-Type")[0] == "text/csv")
+    {
+        try
+        {
             $result = $loc->importCSV($body);
             if (!$result["success"]) return $response->withStatus(400)->withJson($result);
             return $response->withJson($result);
-        } catch (Exception $e) {
+        } catch (Exception $e)
+        {
             return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
         }
-    } else {
+    } else
+    {
         $json = json_decode($body, true);
-        if (!$json || json_last_error_msg() != "No error") {
+        if (!$json || json_last_error_msg() != "No error")
+        {
             return $response->withStatus(400)->withJson(["success" => false, "error" => "Invalid JSON"]);
         }
-        try {
-            if (isset($args["record_id"])) {
+        try
+        {
+            if (isset($args["record_id"]))
+            {
                 $result = $loc->edit($args["record_id"], $json, $user);
-            } else {
+            } else
+            {
                 $result = $loc->add($json, $user);
 
             }
-            if (!$result["success"]) {
+            if (!$result["success"])
+            {
                 return $response->withStatus(400)->withJson($result);
-            } else {
+            } else
+            {
 
-                if ($result["success"] == 0 && $result["failure"] > 0) {
+                if ($result["success"] == 0 && $result["failure"] > 0)
+                {
                     return $response->withStatus(400)->withJson($result);
                 }
                 return $response->withJson($result);
             }
-        } catch (Exception $e) {
+        } catch (Exception $e)
+        {
             return $response->withStatus(500)->withJson(["success" => false, "error" => $e->getMessage()]);
         }
     }
 });
 
-$app->post("/column/{column}", function ($request, $response, $args) {
+$app->post("/column/{column}", function ($request, $response, $args)
+{
     $loc = new Location($args["id"]);
     $result = $loc->addColumn($args["column"]);
     return $response->withJson($result);
 });
 
-$app->delete("/{record}/", function ($request, $response, $args) {
+$app->delete("/{record}/", function ($request, $response, $args)
+{
     $loc = new Location($args["id"]);
     $record = $args["record"];
     $user = $request->getHeader("X-User")[0] ?? "system";
     $result = $loc->delete($record, $user);
-    if ($result == []) {
+    if ($result == [])
+    {
         return $response->withStatus(404)->withJson(["success" => false, "error" => "Record not found"]);
     }
     return $response->withJson($result);
