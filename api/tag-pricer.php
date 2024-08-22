@@ -259,7 +259,7 @@ $app->get("/general", function ($request, $response, $args)
             }
             $fontSize = $priceFontSizeModifier * 72;
             $svgContent .= "<text x='50%' y='{$yPos}in' font-family='Verdana' font-size='{$fontSize}px' font-weight='bold' text-anchor='middle'>$$price</text>";
-            $yPos += $priceFontSizeModifier + .01;
+            $yPos += $priceFontSizeModifier -.03;
         }
         if ($mp != "")
         {
@@ -283,7 +283,7 @@ $app->get("/general", function ($request, $response, $args)
             }
             $fontSize = $mpFontSizeModifier * 72;
             $svgContent .= "<text x='50%' y='{$yPos}in' font-family='Verdana' font-size='{$fontSize}px' font-weight='bold' text-anchor='middle'>$$mp</text>";
-            $yPos += $mpFontSizeModifier - .11;
+            $yPos += $mpFontSizeModifier - .05;
         }
         if ($year != "" || $color != "")
         {
